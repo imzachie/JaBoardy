@@ -1,0 +1,6 @@
+{
+  "name": "JaBoard",
+  "description": "An expressive Material You Android dashboard and offline-first utility suite for device telemetry, weather, media controls, calendar, notes, and daily tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
