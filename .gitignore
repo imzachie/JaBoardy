@@ -1,0 +1,35 @@
+# Android
+*.apk
+*.ap_
+*.aab
+
+# Build outputs
+build/
+builds/
+gradle/
+.gradle/
+
+# Signing keys
+*.jks
+*.keystore
+keystore.properties
+
+# Local configuration
+local.properties
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+*.tmp
+
+# Project metadata (local)
+metadata.json

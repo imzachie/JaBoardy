@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">JaBoard</string>
+    <string name="media_listener_service_label">JaBoard Media Integration</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_explore">Explore</string>
+    <string name="nav_studio">Studio</string>
+    <string name="nav_settings">Settings</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_clear_search">Clear search</string>
+    <string name="cd_edit_dashboard">Customize dashboard</string>
+    <string name="cd_refresh">Refresh</string>
+</resources>
