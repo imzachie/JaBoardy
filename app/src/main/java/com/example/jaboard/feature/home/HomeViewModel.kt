@@ -14,6 +14,7 @@ import com.example.jaboard.core.system.BatteryMonitorRepository
 import com.example.jaboard.core.system.BatterySnapshot
 import com.example.jaboard.core.system.CalendarEventItem
 import com.example.jaboard.core.system.CalendarRepository
+import com.example.jaboard.core.system.CpuSnapshot
 import com.example.jaboard.core.system.DeviceMonitorRepository
 import com.example.jaboard.core.system.MediaSessionRepository
 import com.example.jaboard.core.system.MediaSessionsUiState
@@ -45,6 +46,7 @@ data class HomeUiState(
   val battery: BatterySnapshot? = null,
   val ram: RamSnapshot? = null,
   val storage: StorageSnapshot? = null,
+  val cpu: CpuSnapshot? = null,
   val media: MediaSessionsUiState = MediaSessionsUiState(),
   val hasCalendarPermission: Boolean = false,
   val upcomingEvents: List<CalendarEventItem> = emptyList(),
@@ -60,6 +62,8 @@ class HomeViewModel(
   private val mediaSessionRepository: MediaSessionRepository,
   private val calendarRepository: CalendarRepository,
 ) : ViewModel() {
+
+  private val cpuFlow = deviceMonitorRepository.observeCpu()
 
   private val clockFlow =
     userPreferencesRepository.preferences
@@ -93,6 +97,7 @@ class HomeViewModel(
         batteryMonitorRepository.observeBattery(),
         deviceMonitorRepository.observeRam(),
         deviceMonitorRepository.observeStorage(),
+        cpuFlow,
         mediaSessionRepository.state,
         calendarState,
       ) { values ->
@@ -103,9 +108,10 @@ class HomeViewModel(
         val battery = values[4] as BatterySnapshot
         val ram = values[5] as RamSnapshot
         val storage = values[6] as StorageSnapshot
-        val media = values[7] as MediaSessionsUiState
+        val cpu = values[7] as CpuSnapshot
+        val media = values[8] as MediaSessionsUiState
         @Suppress("UNCHECKED_CAST")
-        val calPair = values[8] as Pair<Boolean, List<CalendarEventItem>>
+        val calPair = values[9] as Pair<Boolean, List<CalendarEventItem>>
 
         HomeUiState(
           cards = allCards.filter { it.isVisible }.sortedBy { it.sortOrder },
@@ -119,6 +125,7 @@ class HomeViewModel(
           battery = battery,
           ram = ram,
           storage = storage,
+          cpu = cpu,
           media = media,
           hasCalendarPermission = calPair.first,
           upcomingEvents = calPair.second,

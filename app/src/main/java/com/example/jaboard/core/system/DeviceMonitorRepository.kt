@@ -32,6 +32,18 @@ data class RamSnapshot(
   val isLowMemory: Boolean,
 )
 
+data class CpuSnapshot(
+  val usagePercent: Float, // 0-100
+  val load1Min: Float,
+  val load5Min: Float,
+  val load15Min: Float,
+  val coreCount: Int,
+  val frequencyMhz: Int,
+  val maxFrequencyMhz: Int,
+  val temperatureCelsius: Float?,
+  val governor: String?,
+)
+
 data class StorageSnapshot(
   val totalBytes: Long,
   val availableBytes: Long,
@@ -131,6 +143,143 @@ class DeviceMonitorRepository(private val context: Context) {
       availableBytes = avail,
       usedBytes = used,
       usedFraction = (used.toFloat() / total.toFloat()).coerceIn(0f, 1f),
+    )
+  }
+
+  fun observeCpu(intervalMs: Long = 1000L): Flow<CpuSnapshot> = flow {
+    while (true) {
+      emit(readCpuSnapshot())
+      delay(intervalMs)
+    }
+  }
+
+  fun readCpuSnapshot(): CpuSnapshot {
+    val coreCount = Runtime.getRuntime().availableProcessors()
+    var usagePercent = 0f
+    var load1Min = 0f
+    var load5Min = 0f
+    var load15Min = 0f
+    var frequencyMhz = 0
+    var maxFrequencyMhz = 0
+    var temperatureCelsius: Float? = null
+    var governor: String? = null
+
+    // Try to read /proc/stat for CPU usage (limited on modern Android)
+    try {
+      val statFile = File("/proc/stat")
+      if (statFile.exists()) {
+        val lines = statFile.readText().lines()
+        val cpuLine = lines.firstOrNull { it.startsWith("cpu ") }
+        if (cpuLine != null) {
+          val parts = cpuLine.split("\\s+")
+          if (parts.size >= 8) {
+            val user = parts[1].toLong()
+            val nice = parts[2].toLong()
+            val system = parts[3].toLong()
+            val idle = parts[4].toLong()
+            val iowait = parts[5].toLong()
+            val irq = parts[6].toLong()
+            val softirq = parts[7].toLong()
+
+            val total = user + nice + system + idle + iowait + irq + softirq
+            val nonIdle = user + nice + system + irq + softirq + iowait
+
+            // Store for next calculation (using a simple approach)
+            // For real-time usage, we'd need two samples, but this gives a rough estimate
+            if (total > 0) {
+              usagePercent = ((nonIdle.toFloat() / total.toFloat()) * 100f).coerceIn(0f, 100f)
+            }
+          }
+        }
+      }
+    } catch (e: Exception) {
+      // /proc/stat access restricted on modern Android
+    }
+
+    // Try to read load average
+    try {
+      val loadFile = File("/proc/loadavg")
+      if (loadFile.exists()) {
+        val loadText = loadFile.readText().trim()
+        val loadParts = loadText.split("\\s+")
+        if (loadParts.size >= 3) {
+          load1Min = loadParts[0].toFloat()
+          load5Min = loadParts[1].toFloat()
+          load15Min = loadParts[2].toFloat()
+        }
+      }
+    } catch (e: Exception) {
+      // loadavg may not be accessible
+    }
+
+    // Try to read CPU frequency
+    try {
+      val cpuInfoFile = File("/proc/cpuinfo")
+      if (cpuInfoFile.exists()) {
+        val lines = cpuInfoFile.readText().lines()
+        for (line in lines) {
+          if (line.startsWith("cpu MHz") || line.startsWith("clock")) {
+            val parts = line.split(":")
+            if (parts.size >= 2) {
+              frequencyMhz = parts[1].trim().toFloat().toInt()
+            }
+          }
+        }
+      }
+    } catch (e: Exception) {
+      // cpuinfo may be restricted
+    }
+
+    // Try to read max frequency from sysfs
+    try {
+      val maxFreqFile = File("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
+      if (maxFreqFile.exists()) {
+        maxFrequencyMhz = (maxFreqFile.readText().trim().toLong() / 1000).toInt() // kHz to MHz
+      }
+    } catch (e: Exception) {
+      // Not accessible
+    }
+
+    // Try to read thermal zone for temperature
+    try {
+      val thermalFiles = File("/sys/class/thermal").listFiles()
+      thermalFiles?.forEach { zone ->
+        val typeFile = File(zone, "type")
+        val tempFile = File(zone, "temp")
+        if (typeFile.exists() && tempFile.exists()) {
+          val type = typeFile.readText().trim().lowercase()
+          if (type.contains("cpu") || type.contains("therm")) {
+            val temp = tempFile.readText().trim().toLong() / 1000f // millidegrees to Celsius
+            if (temperatureCelsius == null || temp > temperatureCelsius!!) {
+              temperatureCelsius = temp
+            }
+          }
+        }
+      }
+    } catch (e: Exception) {
+      // Thermal zones may not be accessible
+    }
+
+    // Try to read governor
+    try {
+      val governorFile = File("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
+      if (governorFile.exists()) {
+        governor = governorFile.readText().trim()
+      }
+    } catch (e: Exception) {
+      // Governor not accessible
+    }
+
+    return CpuSnapshot(
+      usagePercent = usagePercent,
+      load1Min = load1Min,
+      load5Min = load5Min,
+      load15Min = load15Min,
+      coreCount = coreCount,
+      frequencyMhz = frequencyMhz,
+      maxFrequencyMhz = maxFrequencyMhz,
+      temperatureCelsius = temperatureCelsius,
+      governor = governor,
     )
   }
 

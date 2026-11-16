@@ -16,6 +16,9 @@ import com.example.jaboard.core.datastore.SavedLocation
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -123,4 +126,68 @@ class LocationRepository(private val context: Context) {
 
   private fun defaultCityLabel(lat: Double, lon: Double): Pair<String, String> =
     String.format(Locale.US, "Current Area (%.2f, %.2f)", lat, lon) to ""
+
+  @SuppressLint("MissingPermission")
+  fun observeLocation(): kotlinx.coroutines.flow.Flow<Location?> = channelFlow {
+    if (!hasCoarseLocationPermission()) {
+      close()
+      return@channelFlow
+    }
+
+    val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    val providers = mutableListOf<String>()
+
+    if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) providers.add(LocationManager.GPS_PROVIDER)
+    if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) providers.add(LocationManager.NETWORK_PROVIDER)
+    if (providers.isEmpty()) {
+      close()
+      return@channelFlow
+    }
+
+    val locationListener = object : LocationListener {
+      override fun onLocationChanged(location: Location) {
+        trySend(location)
+      }
+
+      override fun onProviderEnabled(provider: String) {}
+      override fun onProviderDisabled(provider: String) {}
+      override fun onStatusChanged(provider: String, status: Int, extras: android.os.Bundle?) {}
+    }
+
+    val callback = object : android.location.LocationListener {
+      override fun onLocationChanged(location: Location) {
+        trySend(location)
+      }
+
+      override fun onProviderEnabled(provider: String) {}
+      override fun onProviderDisabled(provider: String) {}
+      override fun onStatusChanged(provider: String, status: Int, extras: android.os.Bundle?) {}
+    }
+
+    providers.forEach { provider ->
+      try {
+        // Use the deprecated API which works on all Android versions
+        @Suppress("DEPRECATION")
+        lm.requestLocationUpdates(provider, 1000L, 1f, locationListener, Looper.getMainLooper())
+      } catch (e: SecurityException) {
+        // Permission may have been revoked
+      }
+    }
+
+    // Emit last known location immediately
+    getLastKnownBest(lm)?.let { trySend(it) }
+
+    awaitClose {
+      providers.forEach { provider ->
+        runCatching {
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            lm.removeUpdates(callback)
+          } else {
+            @Suppress("DEPRECATION")
+            lm.removeUpdates(locationListener)
+          }
+        }
+      }
+    }
+  }
 }

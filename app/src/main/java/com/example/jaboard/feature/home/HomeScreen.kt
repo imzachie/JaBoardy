@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SdStorage
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
@@ -359,6 +360,13 @@ private fun BentoDashboardCard(
         size = size,
         modifier = modifier.testTag("home_card_storage"),
         onClick = { onOpenDeviceSection("storage") },
+      )
+    DashboardCardType.CPU ->
+      CpuBentoCard(
+        uiState = uiState,
+        size = size,
+        modifier = modifier.testTag("home_card_cpu"),
+        onClick = { onOpenDeviceSection("cpu") },
       )
     DashboardCardType.QUICK_ACTIONS ->
       QuickActionsBentoCard(
@@ -710,6 +718,94 @@ private fun StorageBentoCard(
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
         )
+      }
+    }
+  }
+}
+
+@Composable
+private fun CpuBentoCard(
+  uiState: HomeUiState,
+  size: CardSize,
+  modifier: Modifier = Modifier,
+  onClick: () -> Unit,
+) {
+  val cpu = uiState.cpu
+  val usagePct = cpu?.usagePercent?.roundToInt() ?: 0
+  val tint = when {
+    (cpu?.usagePercent ?: 0f) >= 80f -> MaterialTheme.colorScheme.error
+    (cpu?.usagePercent ?: 0f) >= 60f -> JaBoardStatusColors.WarningAmber
+    else -> MaterialTheme.colorScheme.primary
+  }
+
+  ExpressiveCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
+    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Icon(
+          Icons.Rounded.Speed,
+          contentDescription = null,
+          tint = tint,
+        )
+        Text("CPU", style = MaterialTheme.typography.labelSmall, color = tint)
+      }
+      Text("$usagePct%", style = JaBoardMonoStyles.HeroNumeric, color = tint)
+      LinearProgressIndicator(
+        progress = { (cpu?.usagePercent ?: 0f) / 100f },
+        modifier = Modifier.fillMaxWidth().height(7.dp),
+        strokeCap = StrokeCap.Round,
+        color = tint,
+        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+      )
+      if (size != CardSize.COMPACT && cpu != null) {
+        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+          ) {
+            Text("Cores", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("${cpu.coreCount}", style = JaBoardMonoStyles.SpecValue)
+          }
+          if (cpu.frequencyMhz > 0) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+              Text("Frequency", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+              Text("${cpu.frequencyMhz} MHz", style = JaBoardMonoStyles.SpecValue)
+            }
+          }
+          cpu.temperatureCelsius?.let { temp ->
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+              Text("Temp", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+              Text(String.format("%.1f°C", temp), style = JaBoardMonoStyles.SpecValue)
+            }
+          }
+          cpu.governor?.let { gov ->
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+              Text("Governor", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+              Text(gov, style = JaBoardMonoStyles.SpecValue)
+            }
+          }
+          if (cpu.load1Min > 0f) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+              Text("Load (1/5/15m)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+              Text(String.format("%.2f / %.2f / %.2f", cpu.load1Min, cpu.load5Min, cpu.load15Min), style = JaBoardMonoStyles.SpecValue)
+            }
+          }
+        }
       }
     }
   }

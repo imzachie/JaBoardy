@@ -73,8 +73,8 @@ fun StudioScreen(viewModel: StudioViewModel) {
   var draggedCardIndex by remember { mutableIntStateOf(-1) }
   var dragOffsetY by remember { mutableFloatStateOf(0f) }
 
-  // Header items before the card items inside LazyColumn = 4
-  val cardListStartOffset = 4
+  // Header items before the card items inside LazyColumn = 3 (Theme, Presets, Section Header)
+  val cardListStartOffset = 3
 
   Scaffold(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -225,102 +225,7 @@ fun StudioScreen(viewModel: StudioViewModel) {
         }
       }
 
-      // 2: Home Clock Format
-      item(key = "studio_clock_format") {
-        val samplePreview =
-          Formatters.formatClockTime(
-            epochMillis = System.currentTimeMillis(),
-            use24Hour = uiState.preferences.use24HourClock,
-            showSeconds = uiState.preferences.showClockSeconds,
-            showMillis = uiState.preferences.showClockMillis,
-          )
-        ExpressiveCard(modifier = Modifier.fillMaxWidth()) {
-          Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-          ) {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically,
-            ) {
-              Text("Home Clock Format", style = MaterialTheme.typography.titleMedium)
-              Surface(
-                shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-              ) {
-                Text(
-                  text = samplePreview,
-                  style = JaBoardMonoStyles.SpecValue,
-                  modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-              }
-            }
-
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-              SegmentedButton(
-                selected = !uiState.preferences.use24HourClock,
-                onClick = { viewModel.setUse24HourClock(false) },
-                shape = SegmentedButtonDefaults.itemShape(0, 2),
-                modifier = Modifier.testTag("studio_clock_12h"),
-              ) {
-                Text("12-hour")
-              }
-              SegmentedButton(
-                selected = uiState.preferences.use24HourClock,
-                onClick = { viewModel.setUse24HourClock(true) },
-                shape = SegmentedButtonDefaults.itemShape(1, 2),
-                modifier = Modifier.testTag("studio_clock_24h"),
-              ) {
-                Text("24-hour")
-              }
-            }
-
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically,
-            ) {
-              Column(modifier = Modifier.weight(1f)) {
-                Text("Show seconds", style = MaterialTheme.typography.titleSmall)
-                Text(
-                  "Display live seconds on the Home clock card",
-                  style = MaterialTheme.typography.bodySmall,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-              }
-              Switch(
-                checked = uiState.preferences.showClockSeconds,
-                onCheckedChange = viewModel::setShowClockSeconds,
-                modifier = Modifier.testTag("studio_clock_seconds_switch"),
-              )
-            }
-
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically,
-            ) {
-              Column(modifier = Modifier.weight(1f)) {
-                Text("Show milliseconds", style = MaterialTheme.typography.titleSmall)
-                Text(
-                  "High-frequency millisecond readout on Home clock",
-                  style = MaterialTheme.typography.bodySmall,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-              }
-              Switch(
-                checked = uiState.preferences.showClockMillis,
-                onCheckedChange = viewModel::setShowClockMillis,
-                modifier = Modifier.testTag("studio_clock_millis_switch"),
-              )
-            }
-          }
-        }
-      }
-
-      // 3: Section Header
+      // 2: Section Header (moved up since Clock Format removed - now in Settings)
       item(key = "studio_cards_header") {
         Row(
           modifier = Modifier.fillMaxWidth().padding(top = 4.dp),

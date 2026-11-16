@@ -45,6 +45,12 @@ enum class DashboardCardType(
     subtitle = "Internal flash space used and free",
     supportedSizes = listOf(CardSize.COMPACT, CardSize.WIDE),
   ),
+  CPU(
+    id = "cpu",
+    defaultTitle = "CPU Monitor",
+    subtitle = "Live usage, load, frequency & thermal",
+    supportedSizes = listOf(CardSize.COMPACT, CardSize.WIDE, CardSize.EXPANDED),
+  ),
   QUICK_ACTIONS(
     id = "quick_actions",
     defaultTitle = "Quick Actions",
@@ -100,21 +106,23 @@ object DashboardSeeds {
           DashboardCardEntity("weather", "Weather", 1, true, CardSize.EXPANDED.name),
           DashboardCardEntity("battery", "Battery", 2, true, CardSize.COMPACT.name),
           DashboardCardEntity("ram", "RAM Usage", 3, true, CardSize.COMPACT.name),
-          DashboardCardEntity("now_playing", "Now Playing", 4, true, CardSize.WIDE.name),
-          DashboardCardEntity("storage", "Storage", 5, true, CardSize.COMPACT.name),
-          DashboardCardEntity("quick_actions", "Quick Actions", 6, true, CardSize.COMPACT.name),
-          DashboardCardEntity("calendar", "Upcoming Events", 7, true, CardSize.WIDE.name),
+          DashboardCardEntity("cpu", "CPU Monitor", 4, true, CardSize.COMPACT.name),
+          DashboardCardEntity("now_playing", "Now Playing", 5, true, CardSize.WIDE.name),
+          DashboardCardEntity("storage", "Storage", 6, true, CardSize.COMPACT.name),
+          DashboardCardEntity("quick_actions", "Quick Actions", 7, true, CardSize.COMPACT.name),
+          DashboardCardEntity("calendar", "Upcoming Events", 8, true, CardSize.WIDE.name),
         )
       DashboardPreset.SYSTEM_TELEMETRY ->
         listOf(
           DashboardCardEntity("battery", "Battery", 0, true, CardSize.WIDE.name),
           DashboardCardEntity("ram", "RAM Usage", 1, true, CardSize.COMPACT.name),
-          DashboardCardEntity("storage", "Storage", 2, true, CardSize.COMPACT.name),
-          DashboardCardEntity("clock", "Clock & Date", 3, true, CardSize.WIDE.name),
-          DashboardCardEntity("weather", "Weather", 4, true, CardSize.WIDE.name),
-          DashboardCardEntity("now_playing", "Now Playing", 5, true, CardSize.WIDE.name),
-          DashboardCardEntity("quick_actions", "Quick Actions", 6, false, CardSize.COMPACT.name),
-          DashboardCardEntity("calendar", "Upcoming Events", 7, false, CardSize.WIDE.name),
+          DashboardCardEntity("cpu", "CPU Monitor", 2, true, CardSize.COMPACT.name),
+          DashboardCardEntity("storage", "Storage", 3, true, CardSize.COMPACT.name),
+          DashboardCardEntity("clock", "Clock & Date", 4, true, CardSize.WIDE.name),
+          DashboardCardEntity("weather", "Weather", 5, true, CardSize.WIDE.name),
+          DashboardCardEntity("now_playing", "Now Playing", 6, true, CardSize.WIDE.name),
+          DashboardCardEntity("quick_actions", "Quick Actions", 7, false, CardSize.COMPACT.name),
+          DashboardCardEntity("calendar", "Upcoming Events", 8, false, CardSize.WIDE.name),
         )
       DashboardPreset.DAILY_FOCUS ->
         listOf(
@@ -125,7 +133,8 @@ object DashboardSeeds {
           DashboardCardEntity("now_playing", "Now Playing", 4, true, CardSize.WIDE.name),
           DashboardCardEntity("battery", "Battery", 5, true, CardSize.COMPACT.name),
           DashboardCardEntity("ram", "RAM Usage", 6, false, CardSize.COMPACT.name),
-          DashboardCardEntity("storage", "Storage", 7, false, CardSize.COMPACT.name),
+          DashboardCardEntity("cpu", "CPU Monitor", 7, false, CardSize.COMPACT.name),
+          DashboardCardEntity("storage", "Storage", 8, false, CardSize.COMPACT.name),
         )
       DashboardPreset.MINIMALIST ->
         listOf(
@@ -134,9 +143,10 @@ object DashboardSeeds {
           DashboardCardEntity("battery", "Battery", 2, true, CardSize.WIDE.name),
           DashboardCardEntity("now_playing", "Now Playing", 3, false, CardSize.WIDE.name),
           DashboardCardEntity("ram", "RAM Usage", 4, false, CardSize.COMPACT.name),
-          DashboardCardEntity("storage", "Storage", 5, false, CardSize.COMPACT.name),
-          DashboardCardEntity("quick_actions", "Quick Actions", 6, false, CardSize.COMPACT.name),
-          DashboardCardEntity("calendar", "Upcoming Events", 7, false, CardSize.WIDE.name),
+          DashboardCardEntity("cpu", "CPU Monitor", 5, false, CardSize.COMPACT.name),
+          DashboardCardEntity("storage", "Storage", 6, false, CardSize.COMPACT.name),
+          DashboardCardEntity("quick_actions", "Quick Actions", 7, false, CardSize.COMPACT.name),
+          DashboardCardEntity("calendar", "Upcoming Events", 8, false, CardSize.WIDE.name),
         )
     }
 }

@@ -69,6 +69,8 @@ import com.example.jaboard.feature.studio.StudioScreen
 import com.example.jaboard.feature.studio.StudioViewModel
 import com.example.jaboard.feature.todo.TodoScreen
 import com.example.jaboard.feature.todo.TodoViewModel
+import com.example.jaboard.feature.compass.CompassScreen
+import com.example.jaboard.feature.compass.CompassViewModel
 import com.example.jaboard.feature.weather.WeatherScreen
 import com.example.jaboard.feature.weather.WeatherViewModel
 
@@ -235,6 +237,7 @@ fun JaBoardAppShell(container: AppContainer) {
                   UtilityDestinationId.MUSIC_PLAYER -> navController.navigate(MusicRoute("player"))
                   UtilityDestinationId.MEDIA_CONTROLS ->
                     navController.navigate(MusicRoute("controls"))
+                  UtilityDestinationId.COMPASS -> navController.navigate(CompassRoute)
                 }
               }
             )
@@ -299,6 +302,14 @@ fun JaBoardAppShell(container: AppContainer) {
                   }
               )
             WeatherScreen(viewModel = vm, onBack = { navController.popBackStack() })
+          }
+
+          composable<CompassRoute> {
+            val vm: CompassViewModel =
+              viewModel(
+                factory = viewModelFactory { CompassViewModel(container.locationRepository) }
+              )
+            CompassScreen(viewModel = vm, onBack = { navController.popBackStack() })
           }
 
           composable<MusicRoute> { entry ->

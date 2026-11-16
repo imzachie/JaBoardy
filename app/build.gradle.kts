@@ -1,9 +1,21 @@
 import java.util.Properties
+import java.io.FileInputStream
+
+// Load local.properties for BuildConfig fields
+val localProperties = Properties()
+val localPropsFile = file("../local.properties")
+if (localPropsFile.exists()) {
+  FileInputStream(localPropsFile).use { localProperties.load(it) }
+}
+val groqApiKey = localProperties.getProperty("GROQ_API_KEY_INTERNAL") ?: ""
+println("DEBUG: GROQ_API_KEY_INTERNAL loaded: ${if (groqApiKey.isNotBlank()) "YES (length=${groqApiKey.length})" else "NO"}")
+println("DEBUG: groqApiKey value = '$groqApiKey'")
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
-  alias(libs.plugins.secrets)
+  // alias(libs.plugins.secrets) - disabled to prevent BuildConfig pollution from local.properties
   alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.google.services)
 }
@@ -22,20 +34,28 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  // Disable BuildConfig generation for GROQ_API_KEY by not including it
+  // The WeatherAiSummaryRepository reads the API key from local.properties at runtime
+  buildTypes {
+    debug {
+      // Don't add GROQ_API_KEY to BuildConfig
+    }
+  }
+
   // Do not remove or modify these signingConfigs. They are necessary for building, installing,
   // and updating Android apps in AI Studio.
- signingConfigs {
-  create("release") {
-    val keystoreProps = Properties().apply {
-      val f = rootProject.file("keystore.properties")
-      if (f.exists()) f.inputStream().use { load(it) }
+  signingConfigs {
+    create("release") {
+      val keystoreProps = Properties().apply {
+        val f = rootProject.file("keystore.properties")
+        if (f.exists()) f.inputStream().use { load(it) }
+      }
+      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
+      storeFile = file(keystorePath)
+      storePassword = System.getenv("STORE_PASSWORD") ?: keystoreProps.getProperty("STORE_PASSWORD")
+      keyAlias = "upload"
+      keyPassword = System.getenv("KEY_PASSWORD") ?: keystoreProps.getProperty("KEY_PASSWORD")
     }
-    val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-    storeFile = file(keystorePath)
-    storePassword = System.getenv("STORE_PASSWORD") ?: keystoreProps.getProperty("STORE_PASSWORD")
-    keyAlias = "upload"
-    keyPassword = System.getenv("KEY_PASSWORD") ?: keystoreProps.getProperty("KEY_PASSWORD")
-  }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
       storePassword = "android"
@@ -74,13 +94,12 @@ android {
   }
 }
 
-// Configure the Secrets Gradle Plugin to use .env and .env.example files
-// to match the convention used in Web projects.
-secrets {
-  propertiesFileName = ".env"
-  defaultPropertiesFileName = ".env.example"
-  ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
-}
+// Secrets Gradle Plugin disabled to prevent BuildConfig pollution from local.properties
+// secrets {
+//   propertiesFileName = ".env"
+//   defaultPropertiesFileName = ".env.example"
+//   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
+// }
 
 // Unused google-services plugin config removed for offline-first build
 

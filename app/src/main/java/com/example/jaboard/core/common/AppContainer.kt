@@ -25,7 +25,7 @@ class AppContainer(context: Context) {
   val notesRepository = NotesRepository(database.noteDao())
   val todoRepository = TodoRepository(database.todoDao())
   val weatherRepository = WeatherRepository(database.weatherCacheDao())
-  val weatherAiSummaryRepository = com.example.jaboard.core.network.WeatherAiSummaryRepository()
+  val weatherAiSummaryRepository = com.example.jaboard.core.network.WeatherAiSummaryRepository(appContext)
 
   val batteryMonitorRepository = BatteryMonitorRepository(appContext)
   val deviceMonitorRepository = DeviceMonitorRepository(appContext)
