@@ -17,7 +17,7 @@ import com.example.jaboard.core.system.MediaSessionRepository
 import com.example.jaboard.core.system.TimerNotificationHelper
 
 class AppContainer(context: Context) {
-  private val appContext = context.applicationContext
+  val appContext = context.applicationContext
 
   val database: JaBoardDatabase = JaBoardDatabase.getInstance(appContext)
   val userPreferencesRepository = UserPreferencesRepository(appContext)

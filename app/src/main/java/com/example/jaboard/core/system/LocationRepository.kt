@@ -167,8 +167,10 @@ class LocationRepository(private val context: Context) {
     providers.forEach { provider ->
       try {
         // Use the deprecated API which works on all Android versions
+        // For GPS provider, use 0 distance to get bearing updates even when stationary
+        val minDistance = if (provider == LocationManager.GPS_PROVIDER) 0f else 1f
         @Suppress("DEPRECATION")
-        lm.requestLocationUpdates(provider, 1000L, 1f, locationListener, Looper.getMainLooper())
+        lm.requestLocationUpdates(provider, 1000L, minDistance, locationListener, Looper.getMainLooper())
       } catch (e: SecurityException) {
         // Permission may have been revoked
       }

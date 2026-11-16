@@ -1,8 +1,12 @@
 package com.example.jaboard.feature.compass
 
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.jaboard.core.system.LocationRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,20 +15,17 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CompassViewModel(private val locationRepository: LocationRepository) : ViewModel() {
+class CompassViewModel(private val context: Context) : ViewModel() {
+
+  private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+  private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+  private val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
   private val _heading = MutableStateFlow(0f)
   val heading: StateFlow<Float> = _heading.stateIn(
     scope = viewModelScope,
     started = SharingStarted.WhileSubscribed(5000),
     initialValue = 0f,
-  )
-
-  private val _altitude = MutableStateFlow(0.0)
-  val altitude: StateFlow<Double> = _altitude.stateIn(
-    scope = viewModelScope,
-    started = SharingStarted.WhileSubscribed(5000),
-    initialValue = 0.0,
   )
 
   private val _accuracy = MutableStateFlow(0f)
@@ -34,78 +35,77 @@ class CompassViewModel(private val locationRepository: LocationRepository) : Vie
     initialValue = 0f,
   )
 
-  private val _speed = MutableStateFlow(0f)
-  val speed: StateFlow<Float> = _speed.stateIn(
-    scope = viewModelScope,
-    started = SharingStarted.WhileSubscribed(5000),
-    initialValue = 0f,
-  )
-
-  private val _latitude = MutableStateFlow(0.0)
-  val latitude: StateFlow<Double> = _latitude.stateIn(
-    scope = viewModelScope,
-    started = SharingStarted.WhileSubscribed(5000),
-    initialValue = 0.0,
-  )
-
-  private val _longitude = MutableStateFlow(0.0)
-  val longitude: StateFlow<Double> = _longitude.stateIn(
-    scope = viewModelScope,
-    started = SharingStarted.WhileSubscribed(5000),
-    initialValue = 0.0,
-  )
-
-  private val _gpsStatus = MutableStateFlow("Searching...")
+  private val _gpsStatus = MutableStateFlow("Initializing...")
   val gpsStatus: StateFlow<String> = _gpsStatus.stateIn(
     scope = viewModelScope,
     started = SharingStarted.WhileSubscribed(5000),
-    initialValue = "Searching...",
+    initialValue = "Initializing...",
   )
 
-  private val _hasPermission = MutableStateFlow(false)
+  private val _hasPermission = MutableStateFlow(true)
   val hasPermission: StateFlow<Boolean> = _hasPermission.stateIn(
     scope = viewModelScope,
     started = SharingStarted.WhileSubscribed(5000),
-    initialValue = false,
+    initialValue = true,
   )
 
+  private var sensorListener: SensorEventListener? = null
+
   init {
-    startLocationUpdates()
+    startSensors()
   }
 
-  private fun startLocationUpdates() {
-    viewModelScope.launch {
-      _hasPermission.value = locationRepository.hasCoarseLocationPermission()
-      if (!_hasPermission.value) {
-        _gpsStatus.value = "Permission required"
-        return@launch
+  private fun startSensors() {
+    if (accelerometer == null || magnetometer == null) {
+      _gpsStatus.value = "Sensors unavailable"
+      return
+    }
+
+    sensorListener = object : SensorEventListener {
+      private val accelerometerValues = FloatArray(3)
+      private val magnetometerValues = FloatArray(3)
+
+      override fun onSensorChanged(event: SensorEvent) {
+        when (event.sensor.type) {
+          Sensor.TYPE_ACCELEROMETER -> {
+            System.arraycopy(event.values, 0, accelerometerValues, 0, 3)
+          }
+          Sensor.TYPE_MAGNETIC_FIELD -> {
+            System.arraycopy(event.values, 0, magnetometerValues, 0, 3)
+          }
+        }
+
+        // Calculate orientation when we have both
+        val rotationMatrix = FloatArray(9)
+        val orientation = FloatArray(3)
+        if (SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerValues, magnetometerValues)) {
+          SensorManager.getOrientation(rotationMatrix, orientation)
+          val headingRad = orientation[0] // azimuth
+          val headingDeg = (Math.toDegrees(headingRad.toDouble()) + 360) % 360
+          _heading.value = headingDeg.toFloat()
+          _accuracy.value = event.accuracy.toFloat()
+          _gpsStatus.value = "Compass Active"
+        }
       }
 
-      locationRepository.observeLocation().collect { location ->
-        if (location != null) {
-          _latitude.value = location.latitude
-          _longitude.value = location.longitude
-          _altitude.value = location.altitude ?: 0.0
-          _speed.value = location.speed ?: 0f
-          _accuracy.value = location.accuracy
-
-          if (location.hasBearing()) {
-            _heading.value = location.bearing
-          }
-
-          _gpsStatus.value = "GPS Active"
-        } else {
-          _gpsStatus.value = "Searching..."
+      override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
+        _accuracy.value = accuracy.toFloat()
+        if (accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
+          _gpsStatus.value = "Calibrate: move in figure-8"
+        } else if (accuracy == SensorManager.SENSOR_STATUS_ACCURACY_HIGH) {
+          _gpsStatus.value = "Compass Active"
         }
       }
     }
+
+    sensorManager.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_UI)
+    sensorManager.registerListener(sensorListener, magnetometer, SensorManager.SENSOR_DELAY_UI)
+    _gpsStatus.value = "Compass Active"
   }
 
-  fun refreshPermission() {
-    _hasPermission.value = locationRepository.hasCoarseLocationPermission()
-    if (_hasPermission.value) {
-      startLocationUpdates()
-    }
+  override fun onCleared() {
+    super.onCleared()
+    sensorListener?.let { sensorManager.unregisterListener(it) }
   }
 
   fun getCardinalDirection(degrees: Float): String {

@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.LocationOn
@@ -40,7 +39,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -49,15 +47,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -80,11 +79,7 @@ import kotlin.math.sin
 @Composable
 fun CompassScreen(viewModel: CompassViewModel, onBack: () -> Unit) {
   val heading by viewModel.heading.collectAsStateWithLifecycle()
-  val altitude by viewModel.altitude.collectAsStateWithLifecycle()
   val accuracy by viewModel.accuracy.collectAsStateWithLifecycle()
-  val speed by viewModel.speed.collectAsStateWithLifecycle()
-  val latitude by viewModel.latitude.collectAsStateWithLifecycle()
-  val longitude by viewModel.longitude.collectAsStateWithLifecycle()
   val gpsStatus by viewModel.gpsStatus.collectAsStateWithLifecycle()
   val hasPermission by viewModel.hasPermission.collectAsStateWithLifecycle()
 
@@ -96,7 +91,7 @@ fun CompassScreen(viewModel: CompassViewModel, onBack: () -> Unit) {
 
   val context = LocalContext.current
   val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-    if (granted) viewModel.refreshPermission()
+    // No-op: sensors don't require runtime permission
   }
 
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -140,24 +135,15 @@ fun CompassScreen(viewModel: CompassViewModel, onBack: () -> Unit) {
             Icon(Icons.Rounded.MyLocation, contentDescription = null, modifier = Modifier.padding(20.dp).size(40.dp))
           }
           Spacer(modifier = Modifier.height(24.dp))
-          Text("Location Permission Required", style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+          Text("Sensors Unavailable", style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
           Spacer(modifier = Modifier.height(12.dp))
           Text(
-            "Compass needs approximate location access to show heading, altitude, and GPS data.",
+            "This device doesn't have the required accelerometer and magnetometer sensors for compass.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
           )
-          Spacer(modifier = Modifier.height(24.dp))
-          FilledTonalButton(
-            onClick = { permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION) },
-            modifier = Modifier.testTag("compass_permission_button"),
-          ) {
-            Icon(Icons.Rounded.MyLocation, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Grant Permission")
-          }
         }
       } else {
         // Main Compass Rose - Simple version using rotating Box
@@ -296,123 +282,87 @@ fun CompassScreen(viewModel: CompassViewModel, onBack: () -> Unit) {
             }
           }
 
-          // Data Grid
-          Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            // Row 1: Altitude & Accuracy
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-              CompassDataTile(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.LocationOn,
-                title = "Altitude",
-                value = String.format("%.0f m", altitude),
-                subtitle = "MSL",
-                accentColor = MaterialTheme.colorScheme.secondary,
-              )
-              CompassDataTile(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.Navigation,
-                title = "Accuracy",
-                value = String.format("±%.0f m", accuracy),
-                subtitle = "GPS precision",
-                accentColor = JaBoardStatusColors.WarningAmber,
-              )
-            }
-
-            // Row 2: Speed & GPS Status
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-              CompassDataTile(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.Speed,
-                title = "Speed",
-                value = String.format("%.1f km/h", speed * 3.6),
-                subtitle = if (speed * 3.6 > 5) "Moving" else "Stationary",
-                accentColor = MaterialTheme.colorScheme.tertiary,
-              )
-              CompassDataTile(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.MyLocation,
-                title = "GPS Status",
-                value = if (gpsStatus == "GPS Active") "Active" else "Searching",
-                subtitle = gpsStatus,
-                accentColor = if (gpsStatus == "GPS Active") JaBoardStatusColors.HealthyGreen else JaBoardStatusColors.WarningAmber,
-              )
-            }
-
-            // Row 3: Coordinates
-            ExpressiveCard(modifier = Modifier.fillMaxWidth()) {
-              Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(
-                  modifier = Modifier.fillMaxWidth(),
-                  horizontalArrangement = Arrangement.spacedBy(10.dp),
-                  verticalAlignment = Alignment.CenterVertically,
-                ) {
-                  Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(40.dp),
-                  ) {
-                    Icon(Icons.Rounded.LocationOn, contentDescription = null, modifier = Modifier.padding(8.dp).size(24.dp))
-                  }
-                  Column(modifier = Modifier.weight(1f)) {
-                    Text("Coordinates", style = MaterialTheme.typography.titleSmall)
-                    Text(
-                      text = "Lat: ${String.format("%.6f", latitude)}, Lon: ${String.format("%.6f", longitude)}",
-                      style = JaBoardMonoStyles.SpecValue,
-                      maxLines = 1,
-                      overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    )
-                  }
+          // Sensor Accuracy Card
+          ExpressiveCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+              ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                  Icon(
+                    Icons.Rounded.Navigation,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                  )
+                  Spacer(modifier = Modifier.width(8.dp))
+                  Text("Sensor Accuracy", style = MaterialTheme.typography.titleMedium)
                 }
+                Text(
+                  text = when {
+                    accuracy == 3f -> "High"
+                    accuracy == 2f -> "Medium"
+                    accuracy == 1f -> "Low"
+                    else -> "Unreliable"
+                  },
+                  style = JaBoardMonoStyles.MetricReadout,
+                  color = when {
+                    accuracy == 3f -> JaBoardStatusColors.HealthyGreen
+                    accuracy == 2f -> JaBoardStatusColors.WarningAmber
+                    accuracy == 1f -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.error
+                  },
+                )
               }
+              LinearProgressIndicator(
+                progress = { (accuracy / 3f).coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().height(6.dp),
+                strokeCap = StrokeCap.Round,
+                color = when {
+                  accuracy == 3f -> JaBoardStatusColors.HealthyGreen
+                  accuracy == 2f -> JaBoardStatusColors.WarningAmber
+                  accuracy == 1f -> MaterialTheme.colorScheme.error
+                  else -> MaterialTheme.colorScheme.error
+                },
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+              )
+              Text(
+                text = "Move device in figure-8 pattern to calibrate",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+          }
+
+          // GPS Status Card
+          ExpressiveCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+              ) {
+                Text("Status", style = MaterialTheme.typography.titleMedium)
+                Text(
+                  text = gpsStatus,
+                  style = JaBoardMonoStyles.SpecValue,
+                  color = when {
+                    gpsStatus == "Compass Active" -> JaBoardStatusColors.HealthyGreen
+                    gpsStatus.contains("Calibrate") -> JaBoardStatusColors.WarningAmber
+                    else -> MaterialTheme.colorScheme.error
+                  },
+                )
+              }
+              Text(
+                text = "Uses accelerometer + magnetometer (works stationary)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
             }
           }
         }
       }
-    }
-  }
-}
-
-@Composable
-private fun CompassDataTile(
-  icon: androidx.compose.ui.graphics.vector.ImageVector,
-  title: String,
-  value: String,
-  subtitle: String,
-  accentColor: Color,
-  modifier: Modifier = Modifier,
-) {
-  ExpressiveCard(modifier = modifier) {
-    Column(
-      modifier = Modifier.padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-      ) {
-        Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(18.dp))
-        Text(
-          text = title,
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-      Text(
-        text = value,
-        style = JaBoardMonoStyles.MetricReadout.copy(fontWeight = FontWeight.Bold),
-      )
-      Text(
-        text = subtitle,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
     }
   }
 }

@@ -1,6 +1,7 @@
 package com.example.jaboard.feature.home
 
 import android.Manifest
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -362,12 +363,14 @@ private fun BentoDashboardCard(
         onClick = { onOpenDeviceSection("storage") },
       )
     DashboardCardType.CPU ->
-      CpuBentoCard(
-        uiState = uiState,
-        size = size,
-        modifier = modifier.testTag("home_card_cpu"),
-        onClick = { onOpenDeviceSection("cpu") },
-      )
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        CpuBentoCard(
+          uiState = uiState,
+          size = size,
+          modifier = modifier.testTag("home_card_cpu"),
+          onClick = { onOpenDeviceSection("cpu") },
+        )
+      }
     DashboardCardType.QUICK_ACTIONS ->
       QuickActionsBentoCard(
         size = size,

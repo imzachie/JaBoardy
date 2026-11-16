@@ -307,7 +307,7 @@ fun JaBoardAppShell(container: AppContainer) {
           composable<CompassRoute> {
             val vm: CompassViewModel =
               viewModel(
-                factory = viewModelFactory { CompassViewModel(container.locationRepository) }
+                factory = viewModelFactory { CompassViewModel(container.appContext) }
               )
             CompassScreen(viewModel = vm, onBack = { navController.popBackStack() })
           }

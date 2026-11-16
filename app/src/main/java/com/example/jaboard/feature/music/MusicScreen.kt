@@ -364,14 +364,14 @@ private fun FullMediaPlayerCard(
         }
       }
 
-      // LRCLIB Lyrics Launcher Button
+      // Lyrics Launcher Button
       FilledTonalButton(
         onClick = onOpenLyrics,
         modifier = Modifier.fillMaxWidth().testTag("music_lyrics_button"),
       ) {
         Icon(Icons.Rounded.Lyrics, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(8.dp))
-        Text("Lyrics (LRCLIB)")
+        Text("Lyrics")
       }
     }
   }
@@ -493,7 +493,7 @@ private fun LyricsBottomSheetContent(
           overflow = TextOverflow.Ellipsis,
         )
         Text(
-          text = session?.artist ?: "LRCLIB Lyrics",
+          text = session?.artist ?: "Lyrics",
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           maxLines = 1,
@@ -507,10 +507,10 @@ private fun LyricsBottomSheetContent(
       ) {
         Text(
           text = when {
-            lyricsState.lyrics?.syncedLines?.isNotEmpty() == true -> "Synced LRCLIB"
+            lyricsState.lyrics?.syncedLines?.isNotEmpty() == true -> "Synced"
             lyricsState.lyrics?.isInstrumental == true -> "Instrumental"
-            lyricsState.lyrics?.plainLyrics != null -> "Plain LRCLIB"
-            else -> "LRCLIB"
+            lyricsState.lyrics?.plainLyrics != null -> "Plain"
+            else -> "Lyrics"
           },
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -527,7 +527,7 @@ private fun LyricsBottomSheetContent(
             verticalArrangement = Arrangement.spacedBy(12.dp),
           ) {
             CircularProgressIndicator(modifier = Modifier.size(36.dp))
-            Text("Searching LRCLIB lyrics...", style = MaterialTheme.typography.bodyMedium)
+            Text("Searching lyrics...", style = MaterialTheme.typography.bodyMedium)
           }
         }
       }

@@ -102,6 +102,22 @@ class DeviceMonitorRepository(private val context: Context) {
   private val wifiManager: WifiManager? =
     context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
 
+  // For CPU delta calculation
+  private var lastCpuTimes: CpuTimes? = null
+
+  private data class CpuTimes(
+    val user: Long,
+    val nice: Long,
+    val system: Long,
+    val idle: Long,
+    val iowait: Long,
+    val irq: Long,
+    val softirq: Long,
+  ) {
+    val total: Long = user + nice + system + idle + iowait + irq + softirq
+    val nonIdle: Long = user + nice + system + irq + softirq + iowait
+  }
+
   fun observeRam(intervalMs: Long = 2500L): Flow<RamSnapshot> = flow {
     while (true) {
       emit(readRamSnapshot())
@@ -147,9 +163,11 @@ class DeviceMonitorRepository(private val context: Context) {
   }
 
   fun observeCpu(intervalMs: Long = 1000L): Flow<CpuSnapshot> = flow {
+    // Prime the delta calculator with first sample (don't emit)
+    readCpuSnapshot()
     while (true) {
-      emit(readCpuSnapshot())
       delay(intervalMs)
+      emit(readCpuSnapshot())
     }
   }
 
@@ -164,7 +182,7 @@ class DeviceMonitorRepository(private val context: Context) {
     var temperatureCelsius: Float? = null
     var governor: String? = null
 
-    // Try to read /proc/stat for CPU usage (limited on modern Android)
+    // Try to read /proc/stat for CPU usage (delta-based calculation)
     try {
       val statFile = File("/proc/stat")
       if (statFile.exists()) {
@@ -181,14 +199,18 @@ class DeviceMonitorRepository(private val context: Context) {
             val irq = parts[6].toLong()
             val softirq = parts[7].toLong()
 
-            val total = user + nice + system + idle + iowait + irq + softirq
-            val nonIdle = user + nice + system + irq + softirq + iowait
+            val currentTimes = CpuTimes(user, nice, system, idle, iowait, irq, softirq)
 
-            // Store for next calculation (using a simple approach)
-            // For real-time usage, we'd need two samples, but this gives a rough estimate
-            if (total > 0) {
-              usagePercent = ((nonIdle.toFloat() / total.toFloat()) * 100f).coerceIn(0f, 100f)
+            // Calculate usage from delta if we have previous sample
+            lastCpuTimes?.let { last ->
+              val totalDelta = currentTimes.total - last.total
+              val nonIdleDelta = currentTimes.nonIdle - last.nonIdle
+              if (totalDelta > 0) {
+                usagePercent = ((nonIdleDelta.toFloat() / totalDelta.toFloat()) * 100f).coerceIn(0f, 100f)
+              }
             }
+            // Update last times for next calculation
+            lastCpuTimes = currentTimes
           }
         }
       }

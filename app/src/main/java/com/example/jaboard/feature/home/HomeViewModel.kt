@@ -1,5 +1,6 @@
 package com.example.jaboard.feature.home
 
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jaboard.core.common.TemperatureUnit
@@ -63,7 +64,22 @@ class HomeViewModel(
   private val calendarRepository: CalendarRepository,
 ) : ViewModel() {
 
-  private val cpuFlow = deviceMonitorRepository.observeCpu()
+  private val cpuFlow =
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+      deviceMonitorRepository.observeCpu()
+    } else {
+      kotlinx.coroutines.flow.flowOf(CpuSnapshot(
+        usagePercent = 0f,
+        load1Min = 0f,
+        load5Min = 0f,
+        load15Min = 0f,
+        coreCount = Runtime.getRuntime().availableProcessors(),
+        frequencyMhz = 0,
+        maxFrequencyMhz = 0,
+        temperatureCelsius = null,
+        governor = null,
+      ))
+    }
 
   private val clockFlow =
     userPreferencesRepository.preferences

@@ -139,6 +139,13 @@ private val UtilityCatalog =
       Icons.Rounded.Wifi,
     ),
     UtilityCatalogItem(
+      UtilityDestinationId.COMPASS,
+      "Compass",
+      "Advanced heading, altitude & GPS status",
+      UtilityCategory.DEVICE,
+      Icons.Rounded.Explore,
+    ),
+    UtilityCatalogItem(
       UtilityDestinationId.WEATHER,
       "Weather",
       "Hourly & 7-day Open-Meteo forecast",
@@ -207,13 +214,6 @@ private val UtilityCatalog =
       "Manage active media sessions",
       UtilityCategory.MEDIA,
       Icons.Rounded.Tune,
-    ),
-    UtilityCatalogItem(
-      UtilityDestinationId.COMPASS,
-      "Compass",
-      "Advanced heading, altitude & GPS status",
-      UtilityCategory.DEVICE,
-      Icons.Rounded.Explore,
     ),
   )
 

@@ -2,6 +2,7 @@ package com.example.jaboard.feature.device
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.jaboard.core.system.CpuSnapshot
 import com.example.jaboard.core.system.DeviceHardwareInfo
 import com.example.jaboard.core.system.DeviceMonitorRepository
 import com.example.jaboard.core.system.NetworkSnapshot
@@ -41,6 +42,25 @@ class DeviceViewModel(private val deviceMonitorRepository: DeviceMonitorReposito
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = deviceMonitorRepository.readNetworkSnapshot(),
+      )
+
+  val cpuState: StateFlow<CpuSnapshot> =
+    deviceMonitorRepository
+      .observeCpu()
+      .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = CpuSnapshot(
+          usagePercent = 0f,
+          load1Min = 0f,
+          load5Min = 0f,
+          load15Min = 0f,
+          coreCount = Runtime.getRuntime().availableProcessors(),
+          frequencyMhz = 0,
+          maxFrequencyMhz = 0,
+          temperatureCelsius = null,
+          governor = null,
+        ),
       )
 
   val hardwareInfo: DeviceHardwareInfo = deviceMonitorRepository.readDeviceHardwareInfo()
