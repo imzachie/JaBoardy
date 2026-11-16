@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JaBoard: Offline-first Material You dashboard for Android</title>
+<meta name="description" content="JaBoard is an offline-first Material You dashboard and utility suite for Android. Download the APK, set up permissions, and read the documentation.">
+<meta name="theme-color" content="#0F1115">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 432 432'%3E%3Crect width='432' height='432' rx='72' fill='%23F7F5F0'/%3E%3Ctext x='24' y='250' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='108' fill='%230A0A0A' textLength='384' lengthAdjust='spacingAndGlyphs'%3EJaBoard%3C/text%3E%3Cg fill='none' stroke='%23FF4A2B' stroke-width='9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cellipse cx='214' cy='198' rx='44' ry='78' transform='rotate(-18 214 198)'/%3E%3Cellipse cx='216' cy='200' rx='52' ry='66' transform='rotate(32 216 200)'/%3E%3Cellipse cx='212' cy='204' rx='36' ry='82' transform='rotate(8 212 204)'/%3E%3Cellipse cx='218' cy='196' rx='60' ry='46' transform='rotate(-48 218 196)'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1115; --surface:#171A21; --surface-2:#1C2029; --line:#222731; --line-2:#2D3340;
+  --accent:#A8C7FA; --accent-ink:#0B2B57; --accent-soft:rgba(168,199,250,.10);
+  --text:#E2E2E9; --muted:#9AA0AE; --dim:#6F7685;
+  --ok:#8FD6A8; --warn:#E8C27A;
+  --r-lg:24px; --r-md:16px; --r-sm:10px;
+  --side:272px;
+  --f-head:'Outfit',system-ui,sans-serif;
+  --f-body:'Plus Jakarta Sans',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{background:var(--bg);color:var(--text);font-family:var(--f-body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+h1,h2,h3,h4{font-family:var(--f-head);font-weight:600;line-height:1.15;letter-spacing:-.01em}
+.icon{width:24px;height:24px;fill:currentColor;flex:none}
+.mono{font-family:var(--f-mono)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+
+/* Sidebar */
+.side{position:fixed;inset:0 auto 0 0;width:var(--side);background:var(--bg);border-right:1px solid var(--line);padding:24px 16px;display:flex;flex-direction:column;gap:24px;z-index:40;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 12px}
+.side .brand{flex-direction:column;align-items:flex-start;gap:8px}
+.logo{display:block;height:68px;width:147px;border-radius:12px}
+.topbar .logo{height:42px;width:91px;border-radius:8px}
+.brand-mark{width:40px;height:40px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--f-head);font-weight:700;font-size:20px}
+.brand b{font-family:var(--f-head);font-size:20px;font-weight:600}
+.brand small{display:block;font-family:var(--f-body);font-size:13px;color:var(--dim);line-height:1.2}
+.nav-group{display:flex;flex-direction:column;gap:2px}
+.nav-top{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:100px;font-weight:500;color:var(--muted);transition:background .2s,color .2s;text-align:left;width:100%}
+.nav-top:hover{background:var(--surface);color:var(--text)}
+.nav-top.active{background:var(--accent);color:var(--accent-ink)}
+.nav-sub{display:none;flex-direction:column;margin:6px 0 10px 28px;border-left:1px solid var(--line)}
+.nav-group.open .nav-sub{display:flex}
+.nav-sub a{padding:7px 16px;font-size:14px;color:var(--dim);border-left:2px solid transparent;margin-left:-1px;transition:color .2s,border-color .2s}
+.nav-sub a:hover{color:var(--text)}
+.nav-sub a.active{color:var(--accent);border-left-color:var(--accent)}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.side-foot a{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:100px;color:var(--muted);font-size:14px}
+.side-foot a:hover{background:var(--surface);color:var(--text)}
+
+.topbar{display:none}
+.scrim{display:none}
+
+main{margin-left:var(--side)}
+.view{display:none;max-width:1040px;margin:0 auto;padding:56px 40px 96px}
+.view.active{display:block;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Shared */
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-body);font-size:14px;font-weight:500;padding:6px 12px;border:1px solid var(--line-2);border-radius:100px;color:var(--accent);background:var(--accent-soft)}
+.badge i{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:100px;font-weight:600;font-size:15px;transition:transform .15s,background .2s,border-color .2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{background:#BCD3FB}
+.btn-ghost{border:1px solid var(--line-2);color:var(--text)}
+.btn-ghost:hover{background:var(--surface);border-color:var(--accent)}
+.eyebrow{font-family:var(--f-body);font-size:15px;font-weight:600;color:var(--accent);margin-bottom:10px}
+section{margin-top:104px}
+section:first-child{margin-top:0}
+.sec-head{max-width:640px;margin-bottom:36px}
+.sec-head h2{font-size:clamp(28px,4vw,38px);margin-bottom:14px}
+.sec-head p{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px}
+
+/* Hero */
+.hero h1{font-size:clamp(40px,6.5vw,68px);margin:22px 0 22px;font-weight:700;letter-spacing:-.025em}
+.hero h1 span{color:var(--accent)}
+.hero p.lead{font-size:clamp(17px,2vw,20px);color:var(--muted);max-width:620px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:32px}
+.chip{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding:5px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+
+/* Feature bento */
+.fgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+.fcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s}
+.fcard:hover{border-color:var(--line-2)}
+.fcard .ico{width:48px;height:48px;border-radius:14px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.fcard h3{font-size:21px}
+.fcard p{color:var(--muted);font-size:15px}
+.fcard .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:8px}
+.s6{grid-column:span 6}.s4{grid-column:span 4}.s3{grid-column:span 3}.s2{grid-column:span 2}
+.bars{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.bar{display:flex;align-items:center;gap:10px;font-family:var(--f-mono);font-size:12px;color:var(--dim)}
+.bar span:first-child{width:92px}
+.bar div{flex:1;height:6px;border-radius:6px;background:var(--line)}
+.bar div i{display:block;height:100%;border-radius:6px;background:var(--accent)}
+.lyrics{display:flex;flex-direction:column;gap:4px;font-family:var(--f-head);font-size:18px;margin-top:4px}
+.lyrics span{color:var(--dim)}
+.lyrics span.on{color:var(--text);font-size:22px}
+
+/* Studio */
+.studio{background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:24px}
+.studio-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:20px}
+.studio-bar .lbl{font-family:var(--f-body);font-size:14px;font-weight:500;color:var(--dim);margin-right:6px}
+.pill{padding:8px 16px;border-radius:100px;border:1px solid var(--line-2);font-size:14px;font-weight:500;color:var(--muted);transition:all .2s}
+.pill:hover{color:var(--text);border-color:var(--accent)}
+.pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:112px;grid-auto-flow:dense;gap:12px}
+.tile{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:6px;cursor:grab;transition:border-color .2s,transform .2s,opacity .2s;overflow:hidden;user-select:none}
+.tile:hover{border-color:var(--line-2)}
+.tile.sz-c{grid-column:span 1;grid-row:span 1}
+.tile.sz-w{grid-column:span 2;grid-row:span 1}
+.tile.sz-x{grid-column:span 2;grid-row:span 2}
+.tile.dragging{opacity:.35}
+.tile.over{border-color:var(--accent);transform:scale(.98)}
+.tile .t-ico{color:var(--accent)}
+.tile .t-title{font-family:var(--f-head);font-weight:500;font-size:16px;line-height:1.2}
+.tile .t-tag{display:none;font-family:var(--f-mono);font-size:11px;color:var(--dim)}
+.tile .t-desc{display:none;font-size:13px;color:var(--muted);line-height:1.5}
+.tile .t-vis{display:none;margin-top:auto}
+.tile.sz-w .t-tag,.tile.sz-x .t-tag{display:block}
+.tile.sz-x .t-desc,.tile.sz-x .t-vis{display:block}
+.tile.sz-x .t-vis{display:flex;flex-direction:column;gap:6px}
+.tile .t-vis i{display:block;height:6px;border-radius:6px;background:var(--line-2)}
+.tile .t-vis i:nth-child(1){width:86%;background:var(--accent)}
+.tile .t-vis i:nth-child(2){width:62%}
+.tile .t-vis i:nth-child(3){width:38%}
+.tile-ctl{position:absolute;top:8px;right:8px;display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.tile:hover .tile-ctl,.tile:focus-within .tile-ctl{opacity:1}
+.tile-ctl button{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--muted);background:var(--bg)}
+.tile-ctl button:hover{color:var(--accent)}
+.tile-ctl .icon{width:16px;height:16px}
+.studio-note{margin-top:16px;font-size:13px;color:var(--dim)}
+
+/* Utilities */
+.utils{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.util{display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md)}
+.util .icon{color:var(--accent)}
+.util b{font-family:var(--f-head);font-weight:500;font-size:17px}
+.util small{display:block;color:var(--dim);font-size:13px;line-height:1.35}
+
+/* Docs */
+.doc-title{font-size:clamp(34px,5vw,52px);margin:14px 0 16px;font-weight:700}
+.doc-lead{color:var(--muted);font-size:18px;max-width:640px}
+.steps{display:flex;flex-direction:column;gap:0;counter-reset:s}
+.step{display:grid;grid-template-columns:48px 1fr;gap:20px;padding-bottom:32px;position:relative;counter-increment:s}
+.step::before{content:counter(s);width:40px;height:40px;border-radius:50%;background:var(--accent-soft);border:1px solid var(--line-2);color:var(--accent);font-family:var(--f-mono);display:grid;place-items:center;font-size:14px}
+.step::after{content:"";position:absolute;left:19.5px;top:46px;bottom:6px;width:1px;background:var(--line)}
+.step:last-child::after{display:none}
+.step h3{font-size:20px;margin:6px 0 8px}
+.step p{color:var(--muted)}
+.step p+p{margin-top:8px}
+.path{font-family:var(--f-mono);font-size:13px;color:var(--accent);background:var(--surface);border:1px solid var(--line);padding:2px 8px;border-radius:6px;white-space:nowrap}
+.perm{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;margin-bottom:16px}
+.perm-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+.perm-head h3{font-size:22px;margin-right:auto}
+.perm-name{font-family:var(--f-mono);font-size:13px;color:var(--accent);background:var(--accent-soft);border:1px solid var(--line-2);padding:4px 10px;border-radius:8px;cursor:pointer}
+.perm-name:hover{border-color:var(--accent)}
+.status{font-family:var(--f-body);font-size:13px;font-weight:500;padding:3px 10px;border-radius:100px;border:1px solid var(--line-2)}
+.status.req{color:var(--warn)}
+.status.opt{color:var(--ok)}
+.perm p{color:var(--muted)}
+.perm dl{display:grid;grid-template-columns:140px 1fr;gap:10px 16px;margin-top:18px;padding-top:18px;border-top:1px solid var(--line);font-size:14px}
+.perm dt{font-family:var(--f-body);font-size:14px;font-weight:600;color:var(--text)}
+.perm dd{color:var(--muted)}
+.perm ol{padding-left:18px;color:var(--muted)}
+.callout{border:1px solid var(--line-2);border-left:3px solid var(--accent);background:var(--surface);border-radius:var(--r-md);padding:24px 26px}
+.callout h3{font-size:20px;margin-bottom:10px;display:flex;gap:10px;align-items:center}
+.callout h3 .icon{color:var(--accent)}
+.callout p{color:var(--muted)}
+.callout p+p{margin-top:10px}
+.spec{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
+.spec th,.spec td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.spec th{font-family:var(--f-body);font-size:14px;color:var(--text);font-weight:600}
+.spec td:first-child{font-family:var(--f-mono);font-size:13px;color:var(--accent);white-space:nowrap}
+.spec td{color:var(--muted)}
+
+footer{margin-top:104px;padding-top:28px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;color:var(--dim);font-size:14px}
+footer a:hover{color:var(--text)}
+footer nav{display:flex;gap:20px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);background:var(--accent);color:var(--accent-ink);padding:10px 18px;border-radius:100px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:80}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Tablet / mobile */
+@media (max-width:1100px){
+  .fgrid .s4,.fgrid .s3,.fgrid .s2{grid-column:span 3}
+}
+@media (max-width:900px){
+  .topbar{display:flex;position:fixed;top:0;left:0;right:0;height:64px;background:rgba(15,17,21,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);align-items:center;justify-content:space-between;padding:0 16px;z-index:50}
+  .topbar .brand{padding:0}
+  .topbar .brand-mark{width:34px;height:34px;font-size:17px}
+  .menu-btn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+  .menu-btn:hover{background:var(--surface)}
+  .side{transform:translateY(-100%);top:64px;bottom:auto;width:100%;max-height:calc(100vh - 64px);border-right:0;border-bottom:1px solid var(--line);transition:transform .3s ease;padding:16px;z-index:45}
+  .side .brand{display:none}
+  .side.open{transform:none}
+  .scrim{display:block;position:fixed;inset:64px 0 0 0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s;z-index:42}
+  .scrim.show{opacity:1;pointer-events:auto}
+  main{margin-left:0;padding-top:64px}
+  .view{padding:36px 20px 72px}
+  html{scroll-padding-top:80px}
+  section{margin-top:80px}
+}
+@media (max-width:640px){
+  .fgrid{grid-template-columns:1fr}
+  .fgrid>*{grid-column:span 1!important}
+  .bento{grid-template-columns:repeat(2,1fr);grid-auto-rows:104px}
+  .tile.sz-w,.tile.sz-x{grid-column:span 2}
+  .tile-ctl{opacity:1}
+  .perm dl{grid-template-columns:1fr;gap:4px}
+  .perm dd{margin-bottom:10px}
+  .step{grid-template-columns:40px 1fr;gap:14px}
+  .btn{width:100%;justify-content:center}
+  .studio{padding:16px;border-radius:24px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<!-- Icon sprite (Material Symbols style, 24px viewBox) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="10 110 412 190">
+    <rect x="10" y="110" width="412" height="190" rx="28" fill="#F7F5F0"/>
+    <text x="26" y="248" font-family="Outfit,'Plus Jakarta Sans',sans-serif" font-weight="800" font-size="108" fill="#0A0A0A" stroke="#0A0A0A" stroke-width="5" stroke-linejoin="round" textLength="372" lengthAdjust="spacingAndGlyphs">JaBoard</text>
+    <g fill="none" stroke="#FF4A2B" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="214" cy="198" rx="44" ry="78" transform="rotate(-18 214 198)"/>
+      <ellipse cx="216" cy="200" rx="52" ry="66" transform="rotate(32 216 200)"/>
+      <ellipse cx="212" cy="204" rx="36" ry="82" transform="rotate(8 212 204)"/>
+      <ellipse cx="218" cy="196" rx="60" ry="46" transform="rotate(-48 218 196)"/>
+      <path d="M170 236c30 44 78 52 96 20 14-26-18-58-52-52-34 6-56 34-34 58"/>
+    </g>
+  </symbol>
+  <symbol id="i-menu" viewBox="0 -960 960 960"><path d="M120-240v-60h720v60H120Zm0-210v-60h720v60H120Zm0-210v-60h720v60H120Z"/></symbol>
+  <symbol id="i-home" viewBox="0 -960 960 960"><path d="M220-180h150v-250h220v250h150v-390L480-765 220-570v390Zm-60 60v-480l320-240 320 240v480H530v-250H430v250H160Zm320-353Z"/></symbol>
+  <symbol id="i-guide" viewBox="0 -960 960 960"><path d="M260-160q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h440q24 0 42 18t18 42v580H260Zm0-60h440v-520H260v520Zm60-120h320v-60H320v60Zm0-120h320v-60H320v60Zm0-120h320v-60H320v60ZM260-220v-520 520Z"/></symbol>
+  <symbol id="i-download" viewBox="0 -960 960 960"><path d="M480-336 288-528l42-42 120 120v-310h60v310l120-120 42 42-192 192ZM220-160q-24 0-42-18t-18-42v-120h60v120h520v-120h60v120q0 24-18 42t-42 18H220Z"/></symbol>
+  <symbol id="i-code" viewBox="0 -960 960 960"><path d="M320-242 80-482l242-242 43 43-199 199 197 197-43 43Zm318 2-43-43 199-199-197-197 43-43 240 240-242 242Z"/></symbol>
+  <symbol id="i-grid" viewBox="0 -960 960 960"><path d="M120-520v-320h320v320H120Zm0 400v-320h320v320H120Zm400-400v-320h320v320H520Zm0 400v-320h320v320H520ZM180-580h200v-200H180v200Zm400 0h200v-200H580v200Zm0 400h200v-200H580v200Zm-400 0h200v-200H180v200Z"/></symbol>
+  <symbol id="i-music" viewBox="0 -960 960 960"><path d="M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.500 5.500T480-418v-422h240v160H540v400q0 66-47 113t-113 47Z"/></symbol>
+  <symbol id="i-chip" viewBox="0 -960 960 960"><path d="M360-360v-240h240v240H360Zm60-60h120v-120H420v120ZM300-120v-80h-80q-24 0-42-18t-18-42v-80h-80v-60h80v-120h-80v-60h80v-120h-80v-60h80v-80q0-24 18-42t42-18h80v-80h60v80h120v-80h60v80h120v-80h60v80h80q24 0 42 18t18 42v80h80v60h-80v120h80v60h-80v120h80v60h-80v80q0 24-18 42t-42 18h-80v80h-60v-80H480v80h-60v-80H300v80h-60v-80h60Zm-80-140h520v-520H220v520Z"/></symbol>
+  <symbol id="i-wifi" viewBox="0 -960 960 960"><path d="M480-120 0-600q95-91 215-143.500T480-796q145 0 265 52.500T960-600L480-120Zm0-86 354-354q-70-56-156-86t-198-30q-112 0-198 30t-156 86l354 354Z"/></symbol>
+  <symbol id="i-cloud" viewBox="0 -960 960 960"><path d="M260-160q-91 0-155.500-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.500 81.500T760-520q69 8 114.500 59.500T920-340q0 75-52.500 127.500T740-160H260Zm0-60h480q50 0 85-35t35-85q0-50-35-85t-85-35h-60v-40q0-92-64-156t-156-64q-92 0-156 64t-64 156v40h-40q-58 0-99 41t-41 99q0 58 41 99t99 41Zm220-260Z"/></symbol>
+  <symbol id="i-notes" viewBox="0 -960 960 960"><path d="M320-600h320v-60H320v60Zm0 120h320v-60H320v60Zm0 120h200v-60H320v60ZM200-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h560q24 0 42 18t18 42v600q0 24-18 42t-42 18H200Zm0-60h560v-600H200v600Z"/></symbol>
+  <symbol id="i-check" viewBox="0 -960 960 960"><path d="m424-296 282-282-42-42-240 240-114-114-42 42 156 156ZM200-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h560q24 0 42 18t18 42v600q0 24-18 42t-42 18H200Zm0-60h560v-600H200v600Z"/></symbol>
+  <symbol id="i-calc" viewBox="0 -960 960 960"><path d="M316-260h60v-70h70v-60h-70v-70h-60v70h-70v60h70v70Zm214-70h190v-60H530v60Zm0-110h190v-60H530v60ZM246-640h200v-60H246v60Zm284 0h190v-60H530v60ZM200-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h560q24 0 42 18t18 42v600q0 24-18 42t-42 18H200Zm0-60h560v-600H200v600Z"/></symbol>
+  <symbol id="i-timer" viewBox="0 -960 960 960"><path d="M360-860v-60h240v60H360Zm90 460h60v-250h-60v250ZM480-80q-74 0-139.500-28.500T226-186q-49-49-77.500-114.500T120-440q0-74 28.500-139.500T226-694q49-49 114.500-77.500T480-800q62 0 119 20t107 58l42-42 42 42-42 42q38 50 58 107t20 119q0 74-28.500 139.500T734-186q-49 49-114.500 77.500T480-80Zm0-60q125 0 212.500-87.500T780-440q0-125-87.500-212.500T480-740q-125 0-212.500 87.500T180-440q0 125 87.500 212.500T480-140Zm0-300Z"/></symbol>
+  <symbol id="i-stopwatch" viewBox="0 -960 960 960"><path d="M360-860v-60h240v60H360Zm100 440h40v-190h-40v190Zm20 340q-74 0-139.500-28T226-186q-49-49-77.500-114.500T120-440q0-74 28.500-139.500T226-694q49-49 114.500-77T480-800q74 0 139.500 28T734-694q49 49 77.500 114.500T840-440q0 74-28.500 139.500T734-186q-49 49-114.500 77T480-80Zm0-60q125 0 212.500-87.500T780-440q0-125-87.500-212.500T480-740q-125 0-212.500 87.500T180-440q0 125 87.500 212.500T480-140Z"/></symbol>
+  <symbol id="i-cal" viewBox="0 -960 960 960"><path d="M200-80q-24 0-42-18t-18-42v-620q0-24 18-42t42-18h65v-60h65v60h300v-60h65v60h65q24 0 42 18t18 42v620q0 24-18 42t-42 18H200Zm0-60h560v-400H200v400Zm0-460h560v-100H200v100Zm0 0v-100 100Z"/></symbol>
+  <symbol id="i-clock" viewBox="0 -960 960 960"><path d="m612-292 56-56-148-148v-184h-80v216l172 172ZM480-80q-83 0-156-31.500T197-197q-54-54-85.500-127T80-480q0-83 31.500-156T197-763q54-54 127-85.500T480-880q83 0 156 31.500T763-763q54 54 85.500 127T880-480q0 83-31.500 156T763-197q-54 54-127 85.500T480-80Zm0-60q142 0 241-99t99-241q0-142-99-241t-241-99q-142 0-241 99t-99 241q0 142 99 241t241 99Z"/></symbol>
+  <symbol id="i-battery" viewBox="0 -960 960 960"><path d="M360-80q-17 0-28.500-11.500T320-120v-640q0-17 11.500-28.500T360-800h80v-80h80v80h80q17 0 28.500 11.500T640-760v640q0 17-11.500 28.500T600-80H360Zm20-60h200v-600H380v600Z"/></symbol>
+  <symbol id="i-memory" viewBox="0 -960 960 960"><path d="M160-160v-60h40v-80h-40v-60h40v-120h-40v-60h40v-80h-40v-60h40v-120h-40v-60h640v60h-40v120h40v60h-40v80h40v60h-40v120h40v60h-40v80h40v60H160Zm100-60h440v-520H260v520Z"/></symbol>
+  <symbol id="i-storage" viewBox="0 -960 960 960"><path d="M160-120q-24 0-42-18t-18-42v-200q0-24 18-42t42-18h640q24 0 42 18t18 42v200q0 24-18 42t-42 18H160Zm0-60h640v-200H160v200Zm120-50q21 0 35.500-14.500T330-280q0-21-14.500-35.500T280-330q-21 0-35.500 14.500T230-280q0 21 14.500 35.500T280-230ZM160-580q-24 0-42-18t-18-42v-200q0-24 18-42t42-18h640q24 0 42 18t18 42v200q0 24-18 42t-42 18H160Zm0-60h640v-200H160v200Z"/></symbol>
+  <symbol id="i-lock" viewBox="0 -960 960 960"><path d="M240-80q-24 0-42-18t-18-42v-400q0-24 18-42t42-18h40v-80q0-83 58.500-141.500T480-880q83 0 141.500 58.500T680-680v80h40q24 0 42 18t18 42v400q0 24-18 42t-42 18H240Zm0-60h480v-400H240v400Zm240-130q31 0 52.500-21.500T554-344q0-31-21.500-52.500T480-418q-31 0-52.500 21.500T406-344q0 31 21.500 52.500T480-270ZM340-600h280v-80q0-58-41-99t-99-41q-58 0-99 41t-41 99v80Z"/></symbol>
+  <symbol id="i-info" viewBox="0 -960 960 960"><path d="M450-290h60v-240h-60v240Zm30-310q13 0 21.500-8.500T510-630q0-13-8.500-21.500T480-660q-13 0-21.500 8.500T450-630q0 13 8.500 21.500T480-600Zm0 520q-83 0-156-31.500T197-197q-54-54-85.500-127T80-480q0-83 31.500-156T197-763q54-54 127-85.500T480-880q83 0 156 31.500T763-763q54 54 85.500 127T880-480q0 83-31.500 156T763-197q-54 54-127 85.500T480-80Zm0-60q142 0 241-99t99-241q0-142-99-241t-241-99q-142 0-241 99t-99 241q0 142 99 241t241 99Z"/></symbol>
+  <symbol id="i-left" viewBox="0 -960 960 960"><path d="M560-240 320-480l240-240 42 42-198 198 198 198-42 42Z"/></symbol>
+  <symbol id="i-right" viewBox="0 -960 960 960"><path d="M504-480 306-678l42-42 240 240-240 240-42-42 198-198Z"/></symbol>
+  <symbol id="i-resize" viewBox="0 -960 960 960"><path d="M200-200v-240h60v138l518-518H640v-60h240v240h-60v-138L302-260h138v60H200Z"/></symbol>
+  <symbol id="i-location" viewBox="0 -960 960 960"><path d="M480-480q33 0 56.500-23.500T560-560q0-33-23.500-56.500T480-640q-33 0-56.500 23.500T400-560q0 33 23.500 56.500T480-480Zm0 294q122-112 181-203.500T720-552q0-109-69.500-178.500T480-800q-101 0-170.500 69.500T240-552q0 71 59 162.500T480-186Zm0 106Q319-217 239.500-334.500T160-552q0-150 96.500-239T480-880q127 0 223.500 89T800-552q0 100-79.500 217.500T480-80Z"/></symbol>
+  <symbol id="i-bell" viewBox="0 -960 960 960"><path d="M160-200v-60h80v-304q0-84 49.500-150.500T420-798v-22q0-25 17.500-42.500T480-880q25 0 42.500 17.500T540-820v22q81 17 130.500 83.500T720-564v304h80v60H160Zm320-302Zm0 422q-33 0-56.500-23.500T400-160h160q0 33-23.500 56.500T480-80ZM300-260h360v-304q0-75-52.500-127.500T480-744q-75 0-127.500 52.500T300-564v304Z"/></symbol>
+  <symbol id="i-tune" viewBox="0 -960 960 960"><path d="M440-120v-240h60v90h340v60H500v90h-60Zm-320-90v-60h260v60H120Zm160-180v-90H120v-60h160v-90h60v240h-60Zm160-90v-60h400v60H440Zm180-180v-240h60v90h160v60H680v90h-60Zm-500-90v-60h400v60H120Z"/></symbol>
+</svg>
+
+<header class="topbar">
+  <a class="brand" href="#overview" data-view="overview" aria-label="JaBoard home"><svg class="logo" role="img" aria-label="JaBoard"><use href="#logo"/></svg></a>
+  <button class="menu-btn" id="menuBtn" aria-label="Open navigation" aria-expanded="false" aria-controls="side"><svg class="icon"><use href="#i-menu"/></svg></button>
+</header>
+<div class="scrim" id="scrim"></div>
+
+<aside class="side" id="side" aria-label="Primary navigation">
+  <a class="brand" href="#overview" data-view="overview" aria-label="JaBoard home">
+    <svg class="logo" role="img" aria-label="JaBoard"><use href="#logo"/></svg>
+    <small>Android App</small>
+  </a>
+
+  <nav class="nav-group open" data-group="overview" aria-label="Overview">
+    <button class="nav-top active" data-view="overview"><svg class="icon"><use href="#i-home"/></svg>Overview</button>
+    <div class="nav-sub">
+      <a href="#features" data-spy="overview">Architecture</a>
+      <a href="#studio" data-spy="overview">Bento Studio</a>
+      <a href="#utilities" data-spy="overview">Utilities</a>
+    </div>
+  </nav>
+
+  <nav class="nav-group" data-group="guide" aria-label="Setup guide">
+    <button class="nav-top" data-view="guide"><svg class="icon"><use href="#i-guide"/></svg>Installation &amp; Setup</button>
+    <div class="nav-sub">
+      <a href="#install" data-spy="guide">Install the APK</a>
+      <a href="#permissions" data-spy="guide">Permissions</a>
+      <a href="#limits" data-spy="guide">Known limitations</a>
+    </div>
+  </nav>
+
+  <div class="side-foot">
+    <a href="https://github.com/imzachie/JaBoard/releases/" target="_blank" rel="noopener"><svg class="icon"><use href="#i-download"/></svg>Releases</a>
+    <a href="https://github.com/imzachie/JaBoard" target="_blank" rel="noopener"><svg class="icon"><use href="#i-code"/></svg>Source on GitHub</a>
+  </div>
+</aside>
+
+<main>
+<!-- ============ OVERVIEW ============ -->
+<div class="view active" id="view-overview">
+  <section class="hero" id="top">
+    <h1>Offline-first <span>Material You</span> dashboard and utility suite for Android</h1>
+    <p class="lead">JaBoard puts media controls, device diagnostics, weather, and everyday tools on one customizable surface. Core features keep working without a connection, and the readings it shows come from real Android APIs.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/imzachie/JaBoard/releases/" target="_blank" rel="noopener"><svg class="icon"><use href="#i-download"/></svg>Download APK</a>
+      <a class="btn btn-ghost" href="https://github.com/imzachie/JaBoard" target="_blank" rel="noopener"><svg class="icon"><use href="#i-code"/></svg>GitHub Source</a>
+    </div>
+    <div class="hero-meta">
+      <span class="chip">Android App</span>
+      <span class="chip">Offline-first</span>
+      <span class="chip">Open source</span>
+      <span class="chip">Signed APK</span>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="sec-head">
+      <div class="eyebrow">Architecture</div>
+      <h2>What is inside the dashboard</h2>
+      <p>Each card is a real module backed by a documented Android or web API. Nothing on this page implies data the app cannot obtain.</p>
+    </div>
+    <div class="fgrid">
+      <article class="fcard s4">
+        <div class="ico"><svg class="icon"><use href="#i-grid"/></svg></div>
+        <h3>Customizable Bento Studio</h3>
+        <p>Arrange your home screen from mixed card sizes: Compact, Wide, and Expanded. Drag cards to reorder them, or start from one of four layout presets: Expressive Bento, System Telemetry, Daily Focus, and Minimalist.</p>
+        <div class="tags"><span class="chip">Compact</span><span class="chip">Wide</span><span class="chip">Expanded</span><span class="chip">4 presets</span></div>
+      </article>
+
+      <article class="fcard s2">
+        <div class="ico"><svg class="icon"><use href="#i-music"/></svg></div>
+        <h3>MediaSession &amp; Synced Lyrics</h3>
+        <p>Control playback from other apps and follow time-synced lyrics as the track plays.</p>
+        <div class="lyrics" aria-hidden="true"><span>previous line</span><span class="on">current line</span><span>next line</span></div>
+        <div class="tags"><span class="chip">MediaSession</span></div>
+      </article>
+
+      <article class="fcard s3">
+        <div class="ico"><svg class="icon"><use href="#i-chip"/></svg></div>
+        <h3>Hardware &amp; Wi-Fi Telemetry</h3>
+        <p>Diagnostics built on verified platform values, plus advanced Wi-Fi statistics. If Android does not expose a value, JaBoard does not invent one.</p>
+        <div class="bars" aria-hidden="true">
+          <div class="bar"><span>Battery</span><div><i style="width:70%"></i></div></div>
+          <div class="bar"><span>Memory</span><div><i style="width:48%"></i></div></div>
+          <div class="bar"><span>Storage</span><div><i style="width:58%"></i></div></div>
+        </div>
+        <div class="tags"><span class="chip">BatteryManager</span><span class="chip">ActivityManager.MemoryInfo</span><span class="chip">StatFs</span><span class="chip">SoC metadata</span></div>
+      </article>
+
+      <article class="fcard s3">
+        <div class="ico"><svg class="icon"><use href="#i-cloud"/></svg></div>
+        <h3>Open-Meteo + Groq Weather Engine</h3>
+        <p>Seven-day and hourly forecasts with UV index, barometric pressure, wind, and visibility. Results are cached in Room for offline reading, and Groq produces a short AI summary in well under a second.</p>
+        <div class="tags"><span class="chip">Open-Meteo</span><span class="chip">Groq</span><span class="chip">Room cache</span></div>
+      </article>
+
+      <article class="fcard s6">
+        <div class="ico"><svg class="icon"><use href="#i-tune"/></svg></div>
+        <h3>15 Built-in Utilities</h3>
+        <p>Notes, To-Do lists, a scientific Calculator, Countdown Timer, Stopwatch with laps, Calendar, and Clock ship inside the app, so you do not need a separate app for each.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="studio">
+    <div class="sec-head">
+      <div class="eyebrow">Bento Studio</div>
+      <h2>Try the layout editor</h2>
+      <p>This is a layout preview, not live data. Pick a preset, drag cards to reorder, or use the controls on each card to change its size.</p>
+    </div>
+    <div class="studio">
+      <div class="studio-bar" role="group" aria-label="Layout presets">
+        <span class="lbl">Preset</span>
+        <button class="pill" data-preset="expressive" aria-pressed="true">Expressive Bento</button>
+        <button class="pill" data-preset="telemetry" aria-pressed="false">System Telemetry</button>
+        <button class="pill" data-preset="focus" aria-pressed="false">Daily Focus</button>
+        <button class="pill" data-preset="minimal" aria-pressed="false">Minimalist</button>
+      </div>
+      <div class="bento" id="bento" aria-label="Bento layout preview"></div>
+      <p class="studio-note">Drag to reorder on desktop. On touch screens, use the arrow buttons. The resize button cycles Compact, Wide, and Expanded.</p>
+    </div>
+  </section>
+
+  <section id="utilities">
+    <div class="sec-head">
+      <div class="eyebrow">Utilities</div>
+      <h2>Everyday tools, built in</h2>
+      <p>A selection of the 15 built-in utilities.</p>
+    </div>
+    <div class="utils">
+      <div class="util"><svg class="icon"><use href="#i-notes"/></svg><div><b>Notes</b><small>Quick text capture</small></div></div>
+      <div class="util"><svg class="icon"><use href="#i-check"/></svg><div><b>To-Do</b><small>Task lists</small></div></div>
+      <div class="util"><svg class="icon"><use href="#i-calc"/></svg><div><b>Calculator</b><small>Scientific mode</small></div></div>
+      <div class="util"><svg class="icon"><use href="#i-timer"/></svg><div><b>Countdown Timer</b><small>With optional alerts</small></div></div>
+      <div class="util"><svg class="icon"><use href="#i-stopwatch"/></svg><div><b>Stopwatch</b><small>Lap tracking</small></div></div>
+      <div class="util"><svg class="icon"><use href="#i-cal"/></svg><div><b>Calendar</b><small>Upcoming events</small></div></div>
+      <div class="util"><svg class="icon"><use href="#i-clock"/></svg><div><b>Clock</b><small>Time at a glance</small></div></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>JaBoard is an open-source Android app.</span>
+    <nav>
+      <a href="https://github.com/imzachie/JaBoard/releases/" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/imzachie/JaBoard" target="_blank" rel="noopener">GitHub</a>
+      <a href="#guide" data-view="guide">Setup guide</a>
+    </nav>
+  </footer>
+</div>
+
+<!-- ============ GUIDE ============ -->
+<div class="view" id="view-guide">
+  <section>
+    <h1 class="doc-title">Installation &amp; Setup</h1>
+    <p class="doc-lead">Install JaBoard from a signed APK, then grant only the permissions for the features you want. Every permission except the first is optional.</p>
+  </section>
+
+  <section id="install">
+    <div class="sec-head"><div class="eyebrow">Step by step</div><h2>Install the APK</h2></div>
+    <div class="steps">
+      <div class="step"><div>
+        <h3>Download the signed APK</h3>
+        <p>Open the <a class="path" href="https://github.com/imzachie/JaBoard/releases/" target="_blank" rel="noopener">GitHub Releases</a> page and download the APK attached to the Latest Release, using your phone's browser or transferring the file from a computer.</p>
+      </div></div>
+      <div class="step"><div>
+        <h3>Allow installs from your browser or file manager</h3>
+        <p>Android blocks sideloaded apps by default. When prompted, open the settings screen and enable <span class="path">Install unknown apps</span> for the app you used to open the file.</p>
+        <p>The exact menu name varies by manufacturer. It is usually found under <span class="path">Settings &gt; Apps &gt; Special app access</span>. You can turn the permission off again after installing.</p>
+      </div></div>
+      <div class="step"><div>
+        <h3>Install and open JaBoard</h3>
+        <p>Tap the downloaded APK, confirm the install, and launch the app. On first launch you can choose a layout preset in Bento Studio and decide which optional permissions to grant. You can change them at any time in Android Settings.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section id="permissions">
+    <div class="sec-head">
+      <div class="eyebrow">Permissions</div>
+      <h2>What JaBoard asks for, and why</h2>
+      <p>Select a permission name to copy it. Every request is tied to a specific feature.</p>
+    </div>
+
+    <article class="perm" id="perm-notif-access">
+      <div class="perm-head">
+        <h3>Notification Access</h3>
+        <span class="status req">Required for media</span>
+        <code class="perm-name" data-copy>BIND_NOTIFICATION_LISTENER_SERVICE</code>
+      </div>
+      <p>Android only lets an app read other apps' media sessions through a notification listener. Enabling JaBoard here unlocks cross-app playback controls and the synced lyrics viewer.</p>
+      <dl>
+        <dt>How to enable</dt>
+        <dd><ol>
+          <li>Open JaBoard and tap the prompt for media access, or go to Android Settings and search for <span class="path">Notification access</span>.</li>
+          <li>Select JaBoard in the list.</li>
+          <li>Turn the toggle on and confirm the system warning.</li>
+        </ol></dd>
+        <dt>Unlocks</dt><dd>MediaSession controls and live time-synced lyrics.</dd>
+        <dt>If denied</dt><dd>The rest of the app works normally. Only the media card and lyrics are unavailable.</dd>
+      </dl>
+    </article>
+
+    <article class="perm" id="perm-location">
+      <div class="perm-head">
+        <h3>Coarse Location</h3>
+        <span class="status opt">Optional</span>
+        <code class="perm-name" data-copy>ACCESS_COARSE_LOCATION</code>
+      </div>
+      <p>Used only to find your approximate area for weather. If you prefer not to share location, search for a city by name through Open-Meteo instead.</p>
+      <dl>
+        <dt>Option A</dt><dd>Grant coarse location to use one-tap GPS lookup.</dd>
+        <dt>Option B</dt><dd>Decline, then search and pick a city manually in the weather settings.</dd>
+        <dt>If denied</dt><dd>Weather still works through manual city search.</dd>
+      </dl>
+    </article>
+
+    <article class="perm" id="perm-calendar">
+      <div class="perm-head">
+        <h3>Calendar</h3>
+        <span class="status opt">Optional</span>
+        <code class="perm-name" data-copy>READ_CALENDAR</code>
+      </div>
+      <p>Lets the Calendar card show your upcoming events. JaBoard only reads events; it does not edit them.</p>
+      <dl>
+        <dt>Unlocks</dt><dd>Upcoming events on the dashboard.</dd>
+        <dt>If denied</dt><dd>The Calendar utility still shows dates, without event details.</dd>
+      </dl>
+    </article>
+
+    <article class="perm" id="perm-post">
+      <div class="perm-head">
+        <h3>Notifications</h3>
+        <span class="status opt">Optional</span>
+        <code class="perm-name" data-copy>POST_NOTIFICATIONS</code>
+      </div>
+      <p>Allows the Countdown Timer to alert you when it finishes. On recent Android versions this is a runtime permission you grant explicitly.</p>
+      <dl>
+        <dt>Unlocks</dt><dd>Countdown timer alerts.</dd>
+        <dt>If denied</dt><dd>Timers still run, but you will not get a notification when one ends.</dd>
+      </dl>
+    </article>
+
+    <table class="spec" aria-label="Permission summary">
+      <thead><tr><th>Permission</th><th>Status</th><th>Feature</th></tr></thead>
+      <tbody>
+        <tr><td>BIND_NOTIFICATION_LISTENER_SERVICE</td><td>Required for media</td><td>MediaSession controls, synced lyrics</td></tr>
+        <tr><td>ACCESS_COARSE_LOCATION</td><td>Optional</td><td>GPS weather lookup</td></tr>
+        <tr><td>READ_CALENDAR</td><td>Optional</td><td>Upcoming events</td></tr>
+        <tr><td>POST_NOTIFICATIONS</td><td>Optional</td><td>Countdown alerts</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="limits">
+    <div class="sec-head"><div class="eyebrow">Transparency</div><h2>Known limitations</h2></div>
+    <div class="callout">
+      <h3><svg class="icon"><use href="#i-info"/></svg>Honest hardware reporting</h3>
+      <p>JaBoard reports values that Android's public APIs actually return: battery state from <span class="path">BatteryManager</span>, memory from <span class="path">ActivityManager.MemoryInfo</span>, storage from <span class="path">StatFs</span>, and SoC details from platform metadata.</p>
+      <p>Per-core CPU usage percentages are not shown. They would require reading <span class="path">/proc/stat</span>, which modern Android restricts for regular apps. Rather than estimate or fabricate a number, JaBoard leaves that metric out.</p>
+      <p>Some Wi-Fi details and manufacturer-specific fields may also vary by device and Android version.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>JaBoard is an open-source Android app.</span>
+    <nav>
+      <a href="https://github.com/imzachie/JaBoard/releases/" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/imzachie/JaBoard" target="_blank" rel="noopener">GitHub</a>
+      <a href="#overview" data-view="overview">Overview</a>
+    </nav>
+  </footer>
+</div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite">Copied</div>
+
+<script>
+(function(){
+  /* ---------- View switching ---------- */
+  var views = {overview:document.getElementById('view-overview'), guide:document.getElementById('view-guide')};
+  var groups = document.querySelectorAll('.nav-group');
+  var side = document.getElementById('side'), scrim = document.getElementById('scrim'), menuBtn = document.getElementById('menuBtn');
+  var current = 'overview';
+
+  function setView(name, anchor, push){
+    if(!views[name]) return;
+    current = name;
+    Object.keys(views).forEach(function(k){ views[k].classList.toggle('active', k===name); });
+    groups.forEach(function(g){
+      var on = g.dataset.group === name;
+      g.classList.toggle('open', on);
+      g.querySelector('.nav-top').classList.toggle('active', on);
+    });
+    closeMenu();
+    observe();
+    if(anchor){
+      var el = document.getElementById(anchor);
+      if(el){ setTimeout(function(){ el.scrollIntoView({behavior:'smooth'}); }, 40); }
+    } else { window.scrollTo({top:0}); }
+    if(push !== false){
+      try{ history.replaceState(null,'', '#' + (anchor || name)); }catch(e){}
+    }
+  }
+
+  document.addEventListener('click', function(e){
+    var v = e.target.closest('[data-view]');
+    if(v){ e.preventDefault(); setView(v.dataset.view); return; }
+    var s = e.target.closest('[data-spy]');
+    if(s){
+      e.preventDefault();
+      var id = s.getAttribute('href').slice(1);
+      if(current !== s.dataset.spy) setView(s.dataset.spy, id);
+      else { document.getElementById(id).scrollIntoView({behavior:'smooth'}); try{history.replaceState(null,'','#'+id);}catch(e){} closeMenu(); }
+    }
+  });
+
+  /* ---------- Mobile drawer ---------- */
+  function openMenu(){ side.classList.add('open'); scrim.classList.add('show'); menuBtn.setAttribute('aria-expanded','true'); }
+  function closeMenu(){ side.classList.remove('open'); scrim.classList.remove('show'); menuBtn.setAttribute('aria-expanded','false'); }
+  menuBtn.addEventListener('click', function(){ side.classList.contains('open') ? closeMenu() : openMenu(); });
+  scrim.addEventListener('click', closeMenu);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenu(); });
+
+  /* ---------- Scroll-spy ---------- */
+  var io;
+  function observe(){
+    if(io) io.disconnect();
+    var links = document.querySelectorAll('[data-spy="'+current+'"]');
+    var map = {};
+    links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+    io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          links.forEach(function(a){ a.classList.remove('active'); });
+          var a = map[en.target.id]; if(a) a.classList.add('active');
+        }
+      });
+    }, {rootMargin:'-30% 0px -60% 0px'});
+    Object.keys(map).forEach(function(id){ var el = document.getElementById(id); if(el) io.observe(el); });
+  }
+
+  /* ---------- Bento Studio ---------- */
+  var TILES = {
+    media:    {t:'Media',      tag:'MediaSession',                 ico:'i-music',   d:'Playback controls and synced lyrics from other apps.'},
+    weather:  {t:'Weather',    tag:'Open-Meteo + Groq',            ico:'i-cloud',   d:'Hourly and 7-day forecast with a short AI summary.'},
+    battery:  {t:'Battery',    tag:'BatteryManager',               ico:'i-battery', d:'Charge level and state reported by Android.'},
+    memory:   {t:'Memory',     tag:'ActivityManager.MemoryInfo',   ico:'i-memory',  d:'Available and total RAM from the platform.'},
+    storage:  {t:'Storage',    tag:'StatFs',                       ico:'i-storage', d:'Used and free internal storage.'},
+    wifi:     {t:'Wi-Fi',      tag:'WifiManager',                  ico:'i-wifi',    d:'Connection details and advanced Wi-Fi statistics.'},
+    notes:    {t:'Notes',      tag:'Utility',                      ico:'i-notes',   d:'Capture quick text notes.'},
+    todo:     {t:'To-Do',      tag:'Utility',                      ico:'i-check',   d:'Keep a running task list.'},
+    calendar: {t:'Calendar',   tag:'READ_CALENDAR',                ico:'i-cal',     d:'Upcoming events at a glance.'},
+    countdown:{t:'Countdown',  tag:'POST_NOTIFICATIONS',           ico:'i-timer',   d:'Timers with optional end alerts.'},
+    clock:    {t:'Clock',      tag:'Utility',                      ico:'i-clock',   d:'Current time on the dashboard.'}
+  };
+  var PRESETS = {
+    expressive:[['media','x'],['weather','w'],['battery','c'],['memory','c'],['wifi','w'],['notes','c'],['todo','c'],['calendar','w'],['clock','c']],
+    telemetry: [['battery','w'],['memory','w'],['storage','x'],['wifi','x'],['weather','w'],['clock','c'],['media','c']],
+    focus:     [['calendar','x'],['todo','w'],['countdown','w'],['notes','x'],['weather','w'],['clock','c'],['media','c']],
+    minimal:   [['clock','w'],['weather','c'],['battery','c'],['media','w'],['notes','c'],['todo','c']]
+  };
+  var ORDER = ['c','w','x'], CLS = {c:'sz-c',w:'sz-w',x:'sz-x'}, NAMES = {c:'Compact',w:'Wide',x:'Expanded'};
+  var bento = document.getElementById('bento'), state = [], dragIdx = null;
+
+  function ico(id){ return '<svg class="icon t-ico"><use href="#'+id+'"/></svg>'; }
+  function render(){
+    bento.innerHTML = '';
+    state.forEach(function(it, i){
+      var d = TILES[it[0]], el = document.createElement('div');
+      el.className = 'tile ' + CLS[it[1]];
+      el.draggable = true; el.dataset.i = i; el.tabIndex = 0;
+      el.setAttribute('aria-label', d.t + ' card, ' + NAMES[it[1]]);
+      el.innerHTML = ico(d.ico) + '<div class="t-title">'+d.t+'</div><div class="t-tag">'+d.tag+'</div><div class="t-desc">'+d.d+'</div><div class="t-vis" aria-hidden="true"><i></i><i></i><i></i></div>'
+        + '<div class="tile-ctl">'
+        + '<button data-act="l" aria-label="Move '+d.t+' earlier"><svg class="icon"><use href="#i-left"/></svg></button>'
+        + '<button data-act="r" aria-label="Move '+d.t+' later"><svg class="icon"><use href="#i-right"/></svg></button>'
+        + '<button data-act="s" aria-label="Change size of '+d.t+'"><svg class="icon"><use href="#i-resize"/></svg></button></div>';
+      bento.appendChild(el);
+    });
+  }
+  function load(name){
+    state = PRESETS[name].map(function(x){ return x.slice(); });
+    document.querySelectorAll('[data-preset]').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.preset===name); });
+    render();
+  }
+  document.querySelectorAll('[data-preset]').forEach(function(b){ b.addEventListener('click', function(){ load(b.dataset.preset); }); });
+
+  bento.addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-act]'); if(!btn) return;
+    var i = +btn.closest('.tile').dataset.i, a = btn.dataset.act;
+    if(a==='s'){ state[i][1] = ORDER[(ORDER.indexOf(state[i][1])+1)%3]; }
+    else { var j = a==='l' ? i-1 : i+1; if(j<0||j>=state.length) return; var t=state[i]; state[i]=state[j]; state[j]=t; }
+    render();
+    var tiles = bento.children, target = a==='s' ? i : (a==='l' ? i-1 : i+1);
+    if(tiles[target]){ var b2 = tiles[target].querySelector('[data-act="'+a+'"]'); if(b2) b2.focus(); }
+    document.querySelectorAll('[data-preset]').forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+  });
+  bento.addEventListener('dragstart', function(e){
+    var t = e.target.closest('.tile'); if(!t) return;
+    dragIdx = +t.dataset.i; t.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try{ e.dataTransfer.setData('text/plain', String(dragIdx)); }catch(x){}
+  });
+  bento.addEventListener('dragover', function(e){
+    var t = e.target.closest('.tile'); if(!t) return;
+    e.preventDefault();
+    bento.querySelectorAll('.over').forEach(function(n){ n.classList.remove('over'); });
+    t.classList.add('over');
+  });
+  bento.addEventListener('drop', function(e){
+    e.preventDefault();
+    var t = e.target.closest('.tile'); if(!t || dragIdx===null) return;
+    var to = +t.dataset.i, item = state.splice(dragIdx,1)[0];
+    state.splice(to,0,item); dragIdx = null; render();
+    document.querySelectorAll('[data-preset]').forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+  });
+  bento.addEventListener('dragend', function(){ dragIdx = null; render(); });
+
+  /* ---------- Copy permission names ---------- */
+  var toast = document.getElementById('toast'), tt;
+  document.querySelectorAll('[data-copy]').forEach(function(el){
+    el.setAttribute('role','button'); el.tabIndex = 0;
+    function copy(){
+      var txt = el.textContent.trim();
+      function done(){ toast.textContent = 'Copied ' + txt; toast.classList.add('show'); clearTimeout(tt); tt = setTimeout(function(){ toast.classList.remove('show'); }, 1800); }
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done, function(){}); }
+    }
+    el.addEventListener('click', copy);
+    el.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); copy(); } });
+  });
+
+  /* ---------- Init ---------- */
+  load('expressive');
+  var h = location.hash.slice(1);
+  if(h === 'guide' || ['install','permissions','limits'].indexOf(h) > -1){ setView('guide', h==='guide' ? null : h, false); }
+  else if(['features','studio','utilities'].indexOf(h) > -1){ setView('overview', h, false); }
+  else observe();
+})();
+</script>
+</body>
+</html>
