@@ -115,7 +115,7 @@ class MusicViewModel(
         _lyricsError.value = null
       }.onFailure { err ->
         _rawLyrics.value = null
-        _lyricsError.value = err.message ?: "Lyrics not found"
+        _lyricsError.value = err.message ?: "Lyrics not found on LRCLIB"
       }
 
       _isLoadingLyrics.value = false

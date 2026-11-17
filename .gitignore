@@ -1,35 +1,17 @@
-# Android
-*.apk
-*.ap_
-*.aab
-
-# Build outputs
-build/
-builds/
-gradle/
-.gradle/
-
-# Signing keys
-*.jks
-*.keystore
-keystore.properties
-
-# Local configuration
-local.properties
-
-# IDE
-.idea/
 *.iml
-*.iws
-*.ipr
-
-# OS
+.gradle
+.kotlin
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
 .DS_Store
-Thumbs.db
-
-# Misc
-*.log
-*.tmp
-
-# Project metadata (local)
-metadata.json
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.env
+debug.keystore

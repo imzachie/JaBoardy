@@ -78,15 +78,3 @@ interface WeatherCacheDao {
   @Query("DELETE FROM weather_cache")
   suspend fun clearAll()
 }
-
-@Dao
-interface WeatherAiSummaryDao {
-  @Query("SELECT * FROM weather_ai_summary WHERE locationKey = :locationKey LIMIT 1")
-  suspend fun getSummary(locationKey: String): WeatherAiSummaryEntity?
-
-  @Insert(onConflict = OnConflictStrategy.REPLACE)
-  suspend fun insertSummary(entity: WeatherAiSummaryEntity)
-
-  @Query("DELETE FROM weather_ai_summary")
-  suspend fun clearAll()
-}

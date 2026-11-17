@@ -460,7 +460,7 @@ private fun PixelWeatherHeroCard(report: WeatherReport, unit: TemperatureUnit) {
 }
 
 // -------------------------------------------------------------
-// 2. Pixel Weather AI Summary Card (Groq)
+// 2. Pixel Weather AI Summary Card (Gemini)
 // -------------------------------------------------------------
 @Composable
 private fun PixelWeatherAiSummaryCard(
@@ -499,7 +499,7 @@ private fun PixelWeatherAiSummaryCard(
               style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
             )
             Text(
-              text = "Powered by Groq",
+              text = "Powered by Gemini",
               style = MaterialTheme.typography.labelSmall,
               color = MaterialTheme.colorScheme.primary,
             )
@@ -531,7 +531,7 @@ private fun PixelWeatherAiSummaryCard(
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
           LinearProgressIndicator(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)))
           Text(
-            text = "Analyzing conditions with AI...",
+            text = "Analyzing conditions with Gemini AI...",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )

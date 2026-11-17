@@ -1,6 +1,5 @@
 package com.example.jaboard.feature.device
 
-import android.os.Build
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
@@ -48,7 +47,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,34 +65,15 @@ import com.example.jaboard.core.design.JaBoardUtilityTopBar
 import com.example.jaboard.core.design.KeyValueRow
 import com.example.jaboard.core.design.MetricProgressRing
 import com.example.jaboard.core.system.DeviceHardwareInfo
-import com.example.jaboard.core.system.CpuSnapshot
 import com.example.jaboard.core.system.NetworkSnapshot
 import com.example.jaboard.core.system.RamSnapshot
 import com.example.jaboard.core.system.StorageSnapshot
 import com.example.jaboard.core.system.WifiDetails
 import kotlin.math.roundToInt
 
-val DeviceSections = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-  listOf(
-    DeviceSection.RAM,
-    DeviceSection.STORAGE,
-    DeviceSection.CPU,
-    DeviceSection.DEVICE,
-    DeviceSection.NETWORK,
-  )
-} else {
-  listOf(
-    DeviceSection.RAM,
-    DeviceSection.STORAGE,
-    DeviceSection.DEVICE,
-    DeviceSection.NETWORK,
-  )
-}
-
 enum class DeviceSection(val key: String, val label: String) {
   RAM("ram", "RAM"),
   STORAGE("storage", "Storage"),
-  CPU("cpu", "CPU"),
   DEVICE("device", "Device Info"),
   NETWORK("network", "Network / Wi-Fi");
 
@@ -113,20 +92,17 @@ fun DeviceScreen(
 ) {
   val ram by viewModel.ramState.collectAsStateWithLifecycle()
   val storage by viewModel.storageState.collectAsStateWithLifecycle()
-  val cpu by viewModel.cpuState.collectAsStateWithLifecycle()
   val network by viewModel.networkState.collectAsStateWithLifecycle()
   val pingLatency by viewModel.pingLatencyMs.collectAsStateWithLifecycle()
   val isPinging by viewModel.isPinging.collectAsStateWithLifecycle()
   val pingError by viewModel.pingError.collectAsStateWithLifecycle()
   val hw = viewModel.hardwareInfo
 
-  val sections = remember { DeviceSections }
-
   var selectedTabIndex by rememberSaveable(initialSection) {
-    mutableIntStateOf(sections.indexOfFirst { it.key == initialSection }.coerceAtLeast(0))
+    mutableIntStateOf(DeviceSection.indexForKey(initialSection))
   }
 
-  val currentSection = sections[selectedTabIndex]
+  val currentSection = DeviceSection.entries[selectedTabIndex]
 
   Scaffold(
     topBar = {
@@ -135,10 +111,8 @@ fun DeviceScreen(
           when (currentSection) {
             DeviceSection.RAM -> "RAM Monitor"
             DeviceSection.STORAGE -> "Storage Monitor"
-            DeviceSection.CPU -> "CPU Monitor"
             DeviceSection.DEVICE -> "Device Information"
             DeviceSection.NETWORK -> "Network & Wi-Fi"
-            else -> "Device"
           },
         subtitle = "${hw.manufacturer} ${hw.model}",
         onBack = onBack,
@@ -147,7 +121,7 @@ fun DeviceScreen(
   ) { innerPadding ->
     Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
       PrimaryScrollableTabRow(selectedTabIndex = selectedTabIndex, edgePadding = 16.dp) {
-        sections.forEachIndexed { idx, section ->
+        DeviceSection.entries.forEachIndexed { idx, section ->
           Tab(
             selected = selectedTabIndex == idx,
             onClick = { selectedTabIndex = idx },
@@ -169,9 +143,6 @@ fun DeviceScreen(
           DeviceSection.STORAGE -> {
             item { StorageDetailSection(storage) }
           }
-          DeviceSection.CPU -> {
-            item { CpuDetailSection(cpu) }
-          }
           DeviceSection.DEVICE -> {
             item { HardwareDetailSection(hw) }
           }
@@ -185,9 +156,6 @@ fun DeviceScreen(
                 onRunPing = viewModel::runPingTest,
               )
             }
-          }
-          else -> {
-            item { /* Unknown section */ }
           }
         }
       }
@@ -330,112 +298,6 @@ private fun StorageDetailSection(storage: StorageSnapshot) {
         KeyValueRow("Used Space", Formatters.formatBytes(storage.usedBytes), monoValue = true)
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
         KeyValueRow("Free Space", Formatters.formatBytes(storage.availableBytes), monoValue = true)
-      }
-    }
-  }
-}
-
-@Composable
-private fun CpuDetailSection(cpu: CpuSnapshot) {
-  val usagePct = cpu.usagePercent.roundToInt()
-  val usageColor = when {
-    cpu.usagePercent >= 80f -> MaterialTheme.colorScheme.error
-    cpu.usagePercent >= 60f -> JaBoardStatusColors.WarningAmber
-    else -> JaBoardStatusColors.HealthyGreen
-  }
-
-  Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-    ExpressiveCard(modifier = Modifier.fillMaxWidth()) {
-      Column(
-        modifier = Modifier.padding(22.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-      ) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-              imageVector = Icons.Rounded.Speed,
-              contentDescription = null,
-              tint = usageColor,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("CPU Usage", style = MaterialTheme.typography.titleLarge)
-          }
-          Text("$usagePct%", style = JaBoardMonoStyles.HeroNumeric.copy(color = usageColor))
-        }
-
-        LinearProgressIndicator(
-          progress = { cpu.usagePercent / 100f },
-          modifier = Modifier.fillMaxWidth().height(12.dp),
-          strokeCap = StrokeCap.Round,
-          color = usageColor,
-          trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-        )
-
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-          Column {
-            Text("Load (1m / 5m / 15m)", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("${cpu.load1Min} / ${cpu.load5Min} / ${cpu.load15Min}", style = JaBoardMonoStyles.SpecValue)
-          }
-          if (cpu.frequencyMhz > 0) {
-            Column(horizontalAlignment = Alignment.End) {
-              Text("Frequency", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-              Text("${cpu.frequencyMhz} MHz / ${cpu.maxFrequencyMhz} MHz max", style = JaBoardMonoStyles.SpecValue)
-            }
-          }
-        }
-
-        cpu.temperatureCelsius?.let { temp ->
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-          ) {
-            Text("Temperature", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(String.format("%.1f°C", temp), style = JaBoardMonoStyles.SpecValue)
-          }
-        }
-
-        cpu.governor?.let { gov ->
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-          ) {
-            Text("Governor", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(gov, style = JaBoardMonoStyles.SpecValue)
-          }
-        }
-      }
-    }
-
-    ExpressiveCard(modifier = Modifier.fillMaxWidth()) {
-      Column(modifier = Modifier.padding(20.dp)) {
-        Text("CPU Details", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(10.dp))
-        KeyValueRow("Cores", "${cpu.coreCount} logical cores", monoValue = true)
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
-        KeyValueRow("Current Usage", "$usagePct%", monoValue = true)
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
-        KeyValueRow("Load (1m / 5m / 15m)", "${cpu.load1Min} / ${cpu.load5Min} / ${cpu.load15Min}", monoValue = true)
-        if (cpu.frequencyMhz > 0) {
-          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
-          KeyValueRow("Current Frequency", "${cpu.frequencyMhz} MHz", monoValue = true)
-          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
-          KeyValueRow("Max Frequency", "${cpu.maxFrequencyMhz} MHz", monoValue = true)
-        }
-        cpu.temperatureCelsius?.let { temp ->
-          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
-          KeyValueRow("Temperature", String.format("%.1f°C", temp), monoValue = true)
-        }
-        cpu.governor?.let { gov ->
-          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
-          KeyValueRow("Governor", gov)
-        }
       }
     }
   }

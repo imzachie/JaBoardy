@@ -17,7 +17,7 @@ import com.example.jaboard.core.system.MediaSessionRepository
 import com.example.jaboard.core.system.TimerNotificationHelper
 
 class AppContainer(context: Context) {
-  val appContext = context.applicationContext
+  private val appContext = context.applicationContext
 
   val database: JaBoardDatabase = JaBoardDatabase.getInstance(appContext)
   val userPreferencesRepository = UserPreferencesRepository(appContext)
@@ -25,7 +25,7 @@ class AppContainer(context: Context) {
   val notesRepository = NotesRepository(database.noteDao())
   val todoRepository = TodoRepository(database.todoDao())
   val weatherRepository = WeatherRepository(database.weatherCacheDao())
-  val weatherAiSummaryRepository = com.example.jaboard.core.network.WeatherAiSummaryRepository(appContext)
+  val weatherAiSummaryRepository = com.example.jaboard.core.network.WeatherAiSummaryRepository()
 
   val batteryMonitorRepository = BatteryMonitorRepository(appContext)
   val deviceMonitorRepository = DeviceMonitorRepository(appContext)

@@ -25,7 +25,6 @@ import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.CheckBox
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Description
-import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.HourglassBottom
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.MusicNote
@@ -90,7 +89,6 @@ enum class UtilityDestinationId {
   STOPWATCH,
   MUSIC_PLAYER,
   MEDIA_CONTROLS,
-  COMPASS,
 }
 
 private data class UtilityCatalogItem(
@@ -137,13 +135,6 @@ private val UtilityCatalog =
       "Transport, metered & bandwidth",
       UtilityCategory.DEVICE,
       Icons.Rounded.Wifi,
-    ),
-    UtilityCatalogItem(
-      UtilityDestinationId.COMPASS,
-      "Compass",
-      "Advanced heading, altitude & GPS status",
-      UtilityCategory.DEVICE,
-      Icons.Rounded.Explore,
     ),
     UtilityCatalogItem(
       UtilityDestinationId.WEATHER,

@@ -32,8 +32,6 @@ sealed interface JaBoardRoute
 
 @Serializable data object CalculatorRoute : JaBoardRoute
 
-@Serializable data object CompassRoute : JaBoardRoute
-
 @Serializable data class ClockRoute(val initialTab: String = "clock") : JaBoardRoute
 
 @Serializable data object LicensesRoute : JaBoardRoute
