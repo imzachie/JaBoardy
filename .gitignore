@@ -15,3 +15,10 @@
 local.properties
 .env
 debug.keystore
+debug.keystore.base64
+my-upload-key.jks
+keystore.properties
+/app-release.apk
+/.aistudio/
+/.build-outputs/
+/public/
